@@ -141,8 +141,9 @@
         <label for="end_date">End date:</label>
         <input type="date" id="end_date" name="end_date" required>
 
-        <label for="exclude_dates">Exclude Dates (comma-separated, dd-mm-yyyy):</label>
-        <input type="text" id="exclude_dates" name="exclude_dates" required>
+        <label for="exclude_dates">Exclude Dates (.csv):</label>
+        <input type="file" id="exclude_dates" name="exclude_dates" accept=".csv" required>
+       
         <br><br>
 
         <button type="submit">Submit</button>

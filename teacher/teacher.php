@@ -205,18 +205,13 @@
         <option value="8">8</option>
          </select><br><br>
 
-        <label for="subject">Subject</label><br>
-        <select name="subject" id="subject">
-        <option value="BC">BC</option>
-        <option value="BDA">BDA</option>
-        <option value="ML">ML</option>
-        <option value="NLP">NLP</option>
-        <option value="ILOC">ILOC</option>
-        </select><br><br>
-
         <!-- Subject Mapping -->
-        <label for="submap">Subject Mapping (subject: days, comma-separated for multiple days):</label><br>
-        <textarea id="submap" name="submap" rows="6" cols="50" placeholder="Example: BC: Monday,Tuesday; BDA: Monday,Tuesday,Friday"></textarea>
+        <label for="subject">Subject</label>
+        <input id="subject" name="subject" type="text" required>
+
+        <label for="days">Days</label>
+        <input id="days" name="days" type="text" required>
+        
         <br><br>
 
 

@@ -27,16 +27,13 @@ function validateForm($start_date, $end_date) {
 
 // Fetching the form data
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Fetch exclude dates from the form (JSON format: ["dd-mm-yyyy", "dd-mm-yyyy"])
-    $exclude_dates_str = isset($_POST['exclude_dates']) ? $_POST['exclude_dates'] : '';
-    
-    // Fetch subject mapping from the input (submap, format: 'BC:Monday')
-    $submap = isset($_POST['submap']) ? $_POST['submap'] : '';  // Example: "BC:Monday"
+    // Fetch subject and days directly from the form
+    $subject = isset($_POST['subject']) ? $_POST['subject'] : ''; // Subject input
+    $days = isset($_POST['days']) ? $_POST['days'] : ''; // Days input (comma-separated)
 
-    // Extract subject and day of the week from the submap (e.g., "BC:Monday")
-    list($subject, $day_of_week) = explode(':', $submap);
-    if (!$subject || !$day_of_week) {
-        echo "<p class='error-message'>Invalid subject mapping format. Correct format is 'Subject:Day'.</p>";
+    // Validate subject and days
+    if (empty($subject) || empty($days)) {
+        echo "<p class='error-message'>Subject and Days are required.</p>";
         exit();
     }
 
@@ -101,6 +98,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get all dates between start_date and end_date
     $all_dates = getAllDates($start_date, $end_date);
 
+    // Split days into an array
+    $days_array = explode(',', $days); // Assuming days are comma-separated (e.g., 'Monday,Tuesday,Wednesday')
+
     // Insert the dates into the teaching_plan table
     try {
         $stmt_insert = $pdo->prepare("INSERT INTO teaching_plan (subject, teaching_date, content) VALUES (:subject, :date, :content)");
@@ -114,13 +114,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 continue;  // Skip weekends
             }
 
-            // If the current date matches the day of the week in submap, insert it
-            if (strtolower($current_day) == strtolower($day_of_week)) {
+            // If the current date matches the day of the week in the form input, insert it
+            if (in_array($current_day, $days_array)) {
                 // Check if the date is in exclude_dates
                 $content = in_array($date, $formatted_exclude_dates) ? "Non Teaching Day" : ""; // Add content for exclude dates
 
                 // Bind the parameters and insert the data for Non Teaching Days
-                $stmt_insert->bindParam(':subject', $subject, PDO::PARAM_STR);  // Insert subject from submap
+                $stmt_insert->bindParam(':subject', $subject, PDO::PARAM_STR);  // Insert subject from the form
                 $stmt_insert->bindParam(':date', $date, PDO::PARAM_STR);
                 $stmt_insert->bindParam(':content', $content, PDO::PARAM_STR);
                 $stmt_insert->execute();
@@ -129,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         echo "<p class='success-message'>Teaching Plan has been successfully inserted into the database.</p>";
         echo "<a href='teacher.php' class='btn-link'>Go back to form page</a><br>";
-        echo "<a href='teacher.php' class='btn-link'>View teaching plan</a>";
+        echo "<a href='../teachingPlan/teachingPlan.php' class='btn-link'>View teaching plan</a>";
         exit();
     } catch (PDOException $e) {
         $error_message = "Error inserting Teaching Plan: " . $e->getMessage();
@@ -138,3 +138,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teaching Plan</title>
+    <style>
+        .error-message, .success-message { color: red; font-size: 18px; text-align: center; margin-top: 20px; }
+        .success-message { color: green; }
+    </style>
+</head>
+<body>
+    <h2>Create Teaching Plan</h2>
+    <form method="POST" action="">
+        <label for="subject">Subject</label>
+        <input id="subject" name="subject" type="text" required>
+
+        <label for="days">Days (comma separated, e.g. Monday,Tuesday)</label>
+        <input id="days" name="days" type="text" required>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

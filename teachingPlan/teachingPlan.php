@@ -18,6 +18,7 @@
             margin: 10px auto;
             display: block;
         }
+        label{ font-weight:bold; font-size:20px; ; display: block; text-align: center; }
         table { width: 80%; margin: 20px auto; border-collapse: collapse; }
         th, td { padding: 15px; text-align: left; border: 1px solid #ddd; background-color: #fff; }
         th { background-color: #4CAF50; color: white; }
