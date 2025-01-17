@@ -99,11 +99,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $all_dates = getAllDates($start_date, $end_date);
 
     // Split days into an array
-    $days_array = explode(',', $days); // Assuming days are comma-separated (e.g., 'Monday,Tuesday,Wednesday')
+    $days_array = array_map('ucfirst', array_map('trim', explode(',', $days))); // Sanitize and capitalize days (e.g., 'monday' -> 'Monday')
 
     // Insert the dates into the teaching_plan table
     try {
-        $stmt_insert = $pdo->prepare("INSERT INTO teaching_plan (subject, teaching_date, content) VALUES (:subject, :date, :content)");
+        $stmt_insert = $pdo->prepare("INSERT INTO teaching_plan (subject, proposed_date, content) VALUES (:subject, :date, :content)");
 
         foreach ($all_dates as $date) {
             // Get the full weekday name (e.g., 'Monday', 'Tuesday', 'Saturday', 'Sunday')
@@ -127,9 +127,86 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        echo "<p class='success-message'>Teaching Plan has been successfully inserted into the database.</p>";
-        echo "<a href='teacher.php' class='btn-link'>Go back to form page</a><br>";
-        echo "<a href='../teachingPlan/teachingPlan.php' class='btn-link'>View teaching plan</a>";
+        // Success message with the HTML structure provided
+        echo "
+        <!DOCTYPE html>
+        <html lang='en'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Teaching Plan Submitted</title>
+            <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'> <!-- For icons -->
+            <style>
+                body {
+                    font-family: 'Arial', sans-serif;
+                    background-color: #f4f7f6;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                }
+                .container {
+                    background-color: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    padding: 30px;
+                    width: 80%;
+                    max-width: 600px;
+                    text-align: center;
+                }
+                .success-message {
+                    background-color: #d4edda;
+                    color: #155724;
+                    border: 1px solid #c3e6cb;
+                    padding: 15px;
+                    border-radius: 8px;
+                    font-size: 18px;
+                    margin-bottom: 20px;
+                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                }
+                .btn-link {
+                    display: inline-block;
+                    background-color: #007bff;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    text-decoration: none;
+                    margin: 10px 0;
+                    font-size: 16px;
+                    transition: background-color 0.3s ease;
+                }
+                .btn-link:hover {
+                    background-color: #0056b3;
+                }
+                .icon {
+                    margin-right: 8px;
+                }
+                .cta {
+                    margin-top: 30px;
+                }
+                .cta a {
+                    margin-right: 15px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='success-message'>
+                    <i class='fas fa-check-circle icon'></i>
+                    Teaching Plan has been successfully inserted into the database.
+                </div>
+                <div class='cta'>
+                    <a href='teacher.php' class='btn-link'>
+                        <i class='fas fa-arrow-left icon'></i> Go back to form page
+                    </a>
+                    <a href='../teachingPlan/teachingPlan.php' class='btn-link'>
+                        <i class='fas fa-eye icon'></i> View teaching plan
+                    </a>
+                </div>
+            </div>
+        </body>
+        </html>";
         exit();
     } catch (PDOException $e) {
         $error_message = "Error inserting Teaching Plan: " . $e->getMessage();
@@ -138,28 +215,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teaching Plan</title>
-    <style>
-        .error-message, .success-message { color: red; font-size: 18px; text-align: center; margin-top: 20px; }
-        .success-message { color: green; }
-    </style>
-</head>
-<body>
-    <h2>Create Teaching Plan</h2>
-    <form method="POST" action="">
-        <label for="subject">Subject</label>
-        <input id="subject" name="subject" type="text" required>
-
-        <label for="days">Days (comma separated, e.g. Monday,Tuesday)</label>
-        <input id="days" name="days" type="text" required>
-
-        <button type="submit">Submit</button>
-    </form>
-</body>
-</html>

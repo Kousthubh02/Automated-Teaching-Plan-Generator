@@ -1,10 +1,38 @@
+<?php
+// Database connection
+$servername = "localhost";
+$username = "root";
+$password = "1402";
+$dbname = "major_testing";
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Fetch the current editable value
+$sql = "SELECT editable FROM settings WHERE id = 1";
+$result = $conn->query($sql);
+$currentValue = 0;  // Default value
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $currentValue = $row['editable'];
+}
+
+$conn->close();
+
+// Convert the editable value to a string message
+$editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Portal</title>
-    <!-- <title>Fr. C. Rodrigues Institute of Technology - Teacher's Portal</title> -->
     <style>
         /* Basic Styles */
         body {
@@ -25,9 +53,10 @@
             padding: 20px;
             border: 1px solid #000;
             box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
 
-        h1, h2 ,h3{
+        h1, h2, h3 {
             text-align: center;
             margin: 10px 0;
         }
@@ -35,6 +64,7 @@
         label {
             display: block;
             margin-top: 20px;
+            font-weight: bold;
         }
 
         input[type="text"], input[type="date"], input[type="file"] {
@@ -55,6 +85,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 1em;
         }
 
         button.logout {
@@ -64,7 +95,10 @@
             padding: 10px 15px;
         }
 
-        /* Divider between sections */
+        button:hover {
+            opacity: 0.9;
+        }
+
         .separator {
             margin-top: 40px;
             border-top: 1px solid #ccc;
@@ -72,10 +106,24 @@
         }
 
         .message {
-            color: green;
+            font-size: 1.2em;
             font-weight: bold;
             margin-top: 20px;
             text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .editable {
+            color: #4CAF50; /* Green */
+            background-color: #e8f5e9;
+            border: 1px solid #c3e6cb;
+        }
+
+        .not-editable {
+            color: #F44336; /* Red */
+            background-color: #fbe9e7;
+            border: 1px solid #f5c6cb;
         }
 
         img {
@@ -85,14 +133,13 @@
             margin: 0 auto;
         }
 
-        /* Media Queries for responsiveness */
         @media (max-width: 768px) {
             .container {
                 width: 95%;
             }
 
             button {
-                padding: 15px;
+                padding: 12px;
             }
 
             input[type="text"], input[type="date"], input[type="file"] {
@@ -118,36 +165,57 @@
 <body>
 
 <div class="container">
-    <!-- Adding Image Header -->
     <h1><img src="./college.jpeg" alt="Institute Logo"></h1>
 
     <h2>Teaching Plan Generator</h2>
-
     <h3>Admin Portal</h3>
 
     <div>
         <button class="logout">Log Out</button>
     </div>
 
-    <!-- Divider between log out button and the form -->
     <div class="separator"></div>
 
-    <!-- The form starts here -->
-    <form action="adminLogic.php" method="POST" enctype="multipart/form-data">
-    
-        <label for="start_date">Start date:</label>
+    <!-- Display Editable Status -->
+    <?php
+    // Dynamic class for message
+    $statusClass = $editableStatus === "Editable" ? "editable" : "not-editable";
+    ?>
+    <div class="message <?php echo $statusClass; ?>">
+        Current Editable Status: <?php echo $editableStatus; ?>
+    </div>
+
+    <form id="adminForm" action="adminLogic.php" method="POST" enctype="multipart/form-data">
+        <label for="start_date">Start Date:</label>
         <input type="date" id="start_date" name="start_date" required>
 
-        <label for="end_date">End date:</label>
+        <label for="end_date">End Date:</label>
         <input type="date" id="end_date" name="end_date" required>
 
         <label for="exclude_dates">Exclude Dates (.csv):</label>
         <input type="file" id="exclude_dates" name="exclude_dates" accept=".csv" required>
-       
+
         <br><br>
 
         <button type="submit">Submit</button>
+        <button type="button" onclick="submitFormToToggle()">Toggle Editable</button>
     </form>
 </div>
+
+<script>
+    // Function to submit the form to toggle.php
+    function submitFormToToggle() {
+        var form = document.getElementById('adminForm');
+        form.action = 'toggle.php'; // Set the action to toggle.php
+        form.submit(); // Submit the form
+    }
+
+    // Reset form action when Submit button is clicked
+    document.querySelector('button[type="submit"]').addEventListener('click', function () {
+        var form = document.getElementById('adminForm');
+        form.action = 'adminLogic.php'; // Reset the action to adminLogic.php
+    });
+</script>
+
 </body>
 </html>

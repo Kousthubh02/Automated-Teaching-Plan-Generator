@@ -60,26 +60,90 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Insert into database
         $stmt = $pdo->prepare("INSERT INTO teaching_dates (start_date, end_date, exclude_dates) VALUES (?, ?, ?)");
         $stmt->execute([$start_date, $end_date, $json_excluded_dates]);
-
+    
         $pdo->commit();
-
+    
         // Display success message
-        echo '<div style="font-family: Arial, sans-serif; padding: 20px; margin: 20px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; text-align: center; width: 70%; max-width: 600px; margin: auto; display: flex; justify-content: center; align-items: center; min-height: 100px;">';
-        echo '<strong>Success!</strong> Dates have been saved successfully!';
-        echo '</div>';
+        echo '
+        <div style="
+            font-family: Arial, sans-serif;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-in-out;
+        ">
+            <h2 style="margin: 0;">🎉 Success!</h2>
+            <p>Dates have been saved successfully!</p>
+        </div>
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>';
         exit;
     } catch (Exception $e) {
         $pdo->rollBack();
-
+    
         // Display error message
-        echo '<div style="font-family: Arial, sans-serif; padding: 20px; margin: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; text-align: center; width: 80%; max-width: 600px; margin: auto; display: flex; justify-content: center; align-items: center; height: 100vh;">';
-        echo '<strong>Error:</strong> An error occurred: ' . $e->getMessage();
-        echo '</div>';
+        echo '
+        <div style="
+            font-family: Arial, sans-serif;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-in-out;
+        ">
+            <h2 style="margin: 0;">❌ Error:</h2>
+            <p>An error occurred: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</p>
+        </div>
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>';
         exit;
     }
-} else {
-    echo '<div style="font-family: Arial, sans-serif; padding: 20px; margin: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; text-align: center; width: 80%; max-width: 600px; margin: auto; display: flex; justify-content: center; align-items: center; height: 100vh;">';
-    echo '<strong>Error:</strong> Invalid request method.';
-    echo '</div>';
-}
+    } else {
+        echo '
+        <div style="
+            font-family: Arial, sans-serif;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-in-out;
+        ">
+            <h2 style="margin: 0;">❌ Error:</h2>
+            <p>Invalid request method.</p>
+        </div>
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>';
+    }
+    
 

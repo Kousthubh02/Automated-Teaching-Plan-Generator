@@ -4,222 +4,175 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Portal</title>
-    <!-- <title>Fr. C. Rodrigues Institute of Technology - Teacher's Portal</title> -->
     <style>
-        /* Basic Styles */
+        /* Reset and Basic Styles */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f4f4f4;
+            background: #f4f4f4
+            color: #333;
         }
 
         .container {
-            width: 90%;
+            width: 100%;
             max-width: 600px;
-            background-color: white;
+            background: #fff;
             padding: 20px;
-            border: 1px solid #000;
-            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
-        h1, h2 ,h3{
+        h1 img {
+            max-width: 100px;
+            display: block;
+            margin: 0 auto 20px;
+        }
+
+        h2 {
             text-align: center;
-            margin: 10px 0;
+            color: #007BFF;
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-top: 20px;
+            font-weight: bold;
+            margin: 10px 0 5px;
         }
 
-        input[type="text"], input[type="date"], input[type="file"] {
+        input[type="text"], input[type="date"], select {
             width: 100%;
             padding: 10px;
-            margin-top: 5px;
-            box-sizing: border-box;
+            margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1rem;
         }
 
         button {
-            margin-top: 20px;
-            padding: 10px;
             width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            color: #fff;
             background-color: #007BFF;
-            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-        }
-
-        button.logout {
-            float: right;
-            width: auto;
-            background-color: red;
-            padding: 10px 15px;
-        }
-
-        /* Divider between sections */
-        .separator {
-            margin-top: 40px;
-            border-top: 1px solid #ccc;
-            padding-top: 20px;
-        }
-
-        .message {
-            color: green;
-            font-weight: bold;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        /* Media Queries for responsiveness */
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-            }
-
-            button {
-                padding: 15px;
-            }
-
-            input[type="text"], input[type="date"], input[type="file"] {
-                padding: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h2 {
-                font-size: 1.2em;
-            }
-
-            button {
-                padding: 12px;
-            }
-
-            input[type="text"], input[type="date"], input[type="file"] {
-                padding: 10px;
-            }
-        }
-
-         .success-message {
-            color: #155724;
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 20px auto;
-            width: 80%;
-            max-width: 600px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .error-message {
-            color: #721c24;
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 20px auto;
-            width: 80%;
-            max-width: 600px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .btn-link {
-            display: inline-block;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            margin-top: 10px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
             transition: background-color 0.3s ease;
         }
 
-        .btn-link:hover {
-            background-color: #45a049;
+        button.logout {
+            width: auto;
+            padding: 8px 15px;
+            background-color: #dc3545;
+            float: right;
+            margin-top: -10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button.logout:hover {
+            background-color: #c82333;
+        }
+
+        .separator {
+            margin: 20px 0;
+            border-top: 1px solid #ccc;
+        }
+
+        .message {
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
     <!-- Adding Image Header -->
     <h1><img src="./college.jpeg" alt="Institute Logo"></h1>
 
     <h2>Teaching Plan Generator</h2>
+    <h3>Teacher's Portal</h3>
 
-    <h3>Teacher's portal</h3>
+    <button class="logout">Log Out</button>
 
-    <div>
-        <button class="logout">Log Out</button>
-    </div>
-
-    <!-- Divider between log out button and the form -->
     <div class="separator"></div>
 
-    <!-- The form starts here -->
+    <!-- Form Section -->
     <form action="/code/teacher/teacherLogic.php" method="POST" enctype="multipart/form-data">
-
-        <input type="hidden" name="start_date" value="<?php echo isset($_POST['start_date']) ? $_POST['start_date'] : ''; ?>">
-        <input type="hidden" name="end_date" value="<?php echo isset($_POST['end_date']) ? $_POST['end_date'] : ''; ?>">
-        <input type="hidden" name="exclude_dates" value="<?php echo isset($_POST['exclude_dates']) ? $_POST['exclude_dates'] : ''; ?>">
-
-
-        <label for="current_year">Current Year</label><br>
+        <label for="current_year">Current Year</label>
         <select id="current_year" name="current_year">
             <?php
             $currentYear = date("Y");
-            // $startYear = $currentYear - 10; // 50 years in the past
             $startYear = $currentYear; 
-            $endYear = $currentYear + 10;   // 50 years in the future
+            $endYear = $currentYear + 10;
             for ($i = $startYear; $i <= $endYear; $i++) {
                 echo "<option value='$i'>$i</option>";
             }
             ?>
-        </select><br><br>
+        </select>
 
-        <label for="current_sem">Current Semester</label><br>
+        <label for="current_sem">Current Semester</label>
         <select name="current_sem" id="current_sem" required>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-         </select><br><br>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+        </select>
 
-        <!-- Subject Mapping -->
         <label for="subject">Subject</label>
-        <input id="subject" name="subject" type="text" required>
+        <input id="subject" name="subject" type="text" required placeholder="Enter subject name">
 
         <label for="days">Days</label>
-        <input id="days" name="days" type="text" required>
-        
-        <br><br>
-
+        <input id="days" name="days" type="text" required placeholder="Enter number of days">
 
         <button type="submit">Generate</button>
     </form>
-
-
 </div>
-        
 </body>
 </html>
