@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 21, 2025 at 09:30 AM
+-- Generation Time: Jan 23, 2025 at 11:11 AM
 -- Server version: 8.0.32
 -- PHP Version: 8.2.12
 
@@ -107,6 +107,51 @@ INSERT INTO `staff` (`staff_id`, `staff_name`) VALUES
 (3, 'ghi'),
 (4, 'jkl'),
 (5, 'mno');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `subject_table`
+--
+
+CREATE TABLE `subject_table` (
+  `sub_id` int NOT NULL,
+  `sub` varchar(200) DEFAULT NULL,
+  `sem_id` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `subject_table`
+--
+
+INSERT INTO `subject_table` (`sub_id`, `sub`, `sem_id`) VALUES
+(1, 'EM-III', 3),
+(2, 'DSGT', 3),
+(3, 'DS', 3),
+(4, 'DBMS', 3),
+(5, 'DLCOA', 3),
+(6, 'PYTHON', 3),
+(7, 'EM-IV', 4),
+(8, 'AOA', 4),
+(9, 'OS', 4),
+(10, 'CN', 4),
+(11, 'MP', 4),
+(12, 'EVS', 4),
+(13, 'TOC', 5),
+(14, 'SE', 5),
+(15, 'CN', 5),
+(16, 'DWM', 5),
+(17, 'BCA', 5),
+(18, 'SPCC', 6),
+(19, 'CSS', 6),
+(20, 'MC', 6),
+(21, 'AI', 6),
+(22, 'ML', 7),
+(23, 'BDA', 7),
+(24, 'NLP', 8),
+(25, 'DC', 8),
+(26, 'ADS', 8),
+(27, 'SMA', 8);
 
 -- --------------------------------------------------------
 
@@ -233,6 +278,13 @@ ALTER TABLE `staff`
   ADD PRIMARY KEY (`staff_id`);
 
 --
+-- Indexes for table `subject_table`
+--
+ALTER TABLE `subject_table`
+  ADD PRIMARY KEY (`sub_id`),
+  ADD KEY `sem_id` (`sem_id`);
+
+--
 -- Indexes for table `teaching_dates`
 --
 ALTER TABLE `teaching_dates`
@@ -258,6 +310,12 @@ ALTER TABLE `settings`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `subject_table`
+--
+ALTER TABLE `subject_table`
+  MODIFY `sub_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+
+--
 -- AUTO_INCREMENT for table `teaching_dates`
 --
 ALTER TABLE `teaching_dates`
@@ -272,6 +330,12 @@ ALTER TABLE `teaching_plan`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `subject_table`
+--
+ALTER TABLE `subject_table`
+  ADD CONSTRAINT `subject_table_ibfk_1` FOREIGN KEY (`sem_id`) REFERENCES `sem` (`sem_id`);
 
 --
 -- Constraints for table `teaching_plan`

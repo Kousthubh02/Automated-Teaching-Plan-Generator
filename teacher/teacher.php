@@ -1,3 +1,40 @@
+<?php
+require '../database/db_connection.php'; // Include the database connection
+
+// Handle AJAX request for subjects
+if (isset($_GET['semester'])) {
+    $semester = intval($_GET['semester']); // Get the selected semester
+
+    // Prepare the query to fetch subjects for the selected semester
+    $query = "
+        SELECT s.sub_id, s.sub 
+        FROM subject_table s
+        JOIN sem sem ON s.sem_id = sem.sem_id
+        WHERE sem.sem_id = :semester
+    ";
+
+    // Prepare and execute the SQL statement using PDO
+    try {
+        $stmt = $pdo->prepare($query);
+        $stmt->bindParam(':semester', $semester, PDO::PARAM_INT); // Bind the semester ID to the query
+        $stmt->execute();
+
+        // Fetch the subjects
+        $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Set the correct content type for JSON response
+        header('Content-Type: application/json');
+        // Send the subjects as a JSON response
+        echo json_encode($subjects);
+        exit; // End the script to avoid rendering extra HTML
+    } catch (PDOException $e) {
+        // Handle errors
+        echo json_encode(['error' => 'Database query failed: ' . $e->getMessage()]);
+        exit;
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +42,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Portal</title>
     <style>
-        /* Reset and Basic Styles */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -14,7 +50,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #f4f4f4
+            background: #f4f4f4;
             color: #333;
         }
 
@@ -94,82 +130,94 @@
             margin: 20px 0;
             border-top: 1px solid #ccc;
         }
-
-        .message {
-            padding: 10px;
-            text-align: center;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            h2 {
-                font-size: 1.5rem;
-            }
-
-            button {
-                padding: 10px;
-            }
-        }
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const semesterDropdown = document.getElementById("current_sem");
+            const subjectDropdown = document.getElementById("subject");
+
+            semesterDropdown.addEventListener("change", function () {
+                const selectedSemester = this.value;
+                console.log('Selected semester:', selectedSemester);  // Debugging log
+
+                if (selectedSemester) {
+                    fetch(`teacher.php?semester=${selectedSemester}`)
+                        .then(response => {
+                            console.log('Response status:', response.status); // Log the status code
+                            return response.text(); // Get the raw response as text
+                        })
+                        .then(data => {
+                            console.log('Raw response data:', data); // Log the raw response data
+                            try {
+                                const jsonResponse = JSON.parse(data); // Parse JSON only if valid
+                                if (jsonResponse.error) {
+                                    console.error('Error:', jsonResponse.error);
+                                    return;
+                                }
+                                // Clear existing options in the subject dropdown
+                                subjectDropdown.innerHTML = '<option value="">Select a subject</option>';
+                                
+                                // Populate the subject dropdown with new options
+                                jsonResponse.forEach(subject => {
+                                    const option = document.createElement("option");
+                                    option.value = subject.sub_id;
+                                    option.textContent = subject.sub;
+                                    subjectDropdown.appendChild(option);
+                                });
+                            } catch (error) {
+                                console.error("Error parsing JSON:", error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error fetching subjects:", error);
+                        });
+                } else {
+                    // Reset subject dropdown if no semester is selected
+                    subjectDropdown.innerHTML = '<option value="">Select a subject</option>';
+                }
+            });
+        });
+    </script>
 </head>
 <body>
 <div class="container">
-    <!-- Adding Image Header -->
     <h1><img src="./college.jpeg" alt="Institute Logo"></h1>
-
     <h2>Teaching Plan Generator</h2>
     <h3>Teacher's Portal</h3>
-
     <button class="logout">Log Out</button>
-
     <div class="separator"></div>
-
-    <!-- Form Section -->
     <form action="/code/teacher/teacherLogic.php" method="POST" enctype="multipart/form-data">
         <label for="current_year">Current Year</label>
         <select id="current_year" name="current_year">
             <?php
             $currentYear = date("Y");
-            $startYear = $currentYear; 
+            $startYear = $currentYear;
             $endYear = $currentYear + 10;
             for ($i = $startYear; $i <= $endYear; $i++) {
                 echo "<option value='$i'>$i</option>";
             }
             ?>
         </select>
-
+        
         <label for="current_sem">Current Semester</label>
-        <select name="current_sem" id="current_sem" required>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-        </select>
+<select name="current_sem" id="current_sem" required>
+    <option value="" disabled selected>Select Semester</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+</select>
+
 
         <label for="subject">Subject</label>
-        <input id="subject" name="subject" type="text" required placeholder="Enter subject name">
+        <select id="subject" name="subject" required>
+            <option value="">Select a subject</option>
+        </select>
 
         <label for="days">Days</label>
-        <input id="days" name="days" type="text" required placeholder="Enter number of days">
+        <input id="days" name="days" type="text" required placeholder="Enter the days of the week in which you are teaching">
 
         <button type="submit">Generate</button>
     </form>
