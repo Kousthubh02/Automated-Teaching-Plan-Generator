@@ -1,3 +1,40 @@
+<?php
+require '../database/db_connection.php'; // Include the database connection
+
+// Handle AJAX request for subjects based on selected semester
+if (isset($_GET['semester'])) {
+    $semester = intval($_GET['semester']); // Get the selected semester
+
+    // Prepare the query to fetch subjects for the selected semester
+    $query = "
+        SELECT s.sub_id, s.sub
+        FROM subject_table s
+        JOIN sem sem ON s.sem_id = sem.sem_id
+        WHERE sem.sem_id = ?
+    ";
+
+    // Prepare and execute the SQL statement
+    try {
+        $stmt = $pdo->prepare($query);
+        $stmt->bindParam(1, $semester, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Fetch the subjects
+        $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Return subjects as JSON response
+        header('Content-Type: application/json');
+        echo json_encode($subjects);
+        exit; // End the script to avoid rendering extra HTML
+    } catch (PDOException $e) {
+        // If query fails, return an error
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Database query failed: ' . $e->getMessage()]);
+        exit;
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -142,17 +179,71 @@
 </head>
 <body>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const semesterDropdown = document.getElementById("current_sem");
+        const subjectDropdown = document.getElementById("subject_id");
+        const subjectNameInput = document.getElementById("subject"); // Hidden input to store subject name
+
+        semesterDropdown.addEventListener("change", function () {
+            const selectedSemester = this.value;
+
+            if (selectedSemester) {
+                fetch(`teachingplan.php?semester=${selectedSemester}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Error:', data.error);
+                            return;
+                        }
+                        subjectDropdown.innerHTML = '<option value="">Select a subject</option>';
+                        data.forEach(subject => {
+                            const option = document.createElement("option");
+                            option.value = subject.sub_id;
+                            option.textContent = subject.sub;
+                            subjectDropdown.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error fetching subjects:", error);
+                    });
+            } else {
+                subjectDropdown.innerHTML = '<option value="">Select a subject</option>';
+            }
+        });
+
+        // Set subject name in hidden input when a subject is selected
+        subjectDropdown.addEventListener("change", function () {
+            const selectedOption = subjectDropdown.options[subjectDropdown.selectedIndex];
+            const subjectName = selectedOption.text;
+            subjectNameInput.value = subjectName; // Store subject name in the hidden input
+        });
+    });
+</script>
+
     <div class="container">
         <h2>Teaching Plan</h2>
         
         <form method="GET" action="teachingPlanLogic.php">
-            <label for="subject">Select Subject:</label>
-            <select id="subject" name="subject">
-                <option value="">-- Select --</option>
-                <option value="NLP">NLP</option>
-                <option value="BC">BC</option>
-                <option value="BDA">BDA</option>
+            <label for="current_sem">Current Semester</label>
+            <select name="current_sem" id="current_sem" required>
+                <option value="" disabled selected>Select Semester</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
             </select>
+
+            <label for="subject">Subject</label>
+            <select id="subject_id" name="subject" required>
+                <option value="">Select a subject</option>
+            </select>
+
+            <!-- Hidden field to hold subject name -->
+            <input type="hidden" name="subject" id="subject">
+
             <button type="submit">View Teaching Plans</button>
         </form>
         
@@ -163,10 +254,16 @@
         </table>
 
         <div class="cta">
-            <a href="teacher.php">Go Back to Form</a>
+            <a href="teachingplan.php">Go Back to Form</a>
             <a href="viewPlans.php">View All Teaching Plans</a>
         </div>
     </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    form.reset(); // Reset the form to its default state
+});
 
+</script>
 </body>
 </html>
