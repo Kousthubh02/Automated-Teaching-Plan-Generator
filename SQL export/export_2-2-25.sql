@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 23, 2025 at 11:11 AM
+-- Generation Time: Feb 02, 2025 at 07:25 PM
 -- Server version: 8.0.32
 -- PHP Version: 8.2.12
 
@@ -163,7 +163,7 @@ CREATE TABLE `teaching_dates` (
   `id` int NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `exclude_dates` json NOT NULL,
+  `exclude_dates` text NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -172,7 +172,7 @@ CREATE TABLE `teaching_dates` (
 --
 
 INSERT INTO `teaching_dates` (`id`, `start_date`, `end_date`, `exclude_dates`, `created_at`) VALUES
-(1, '2025-01-13', '2025-04-25', '[]', '2025-01-21 08:15:59');
+(1, '2025-01-13', '2025-04-25', '{\"13-02-2025\":\"diwali\",\"14-02-2025\":\"dussehra\",\"19-02-2025\":\"holi\",\"26-02-2025\":\"janmashtami\",\"27-02-2025\":\"ram navami\",\"28-02-2025\":\"lohri\",\"14-03-2025\":\"christmas\",\"26-03-2025\":\"new year\",\"10-04-2025\":\"etamax\",\"14-04-2025\":\"etamax\",\"18-04-2025\":\"etamax\",\"22-04-2025\":\"faces\",\"23-04-2025\":\"faces\",\"24-04-2025\":\"faces\"}', '2025-02-02 15:41:19');
 
 -- --------------------------------------------------------
 
@@ -181,7 +181,6 @@ INSERT INTO `teaching_dates` (`id`, `start_date`, `end_date`, `exclude_dates`, `
 --
 
 CREATE TABLE `teaching_plan` (
-  `lec_no` int NOT NULL,
   `pk` int NOT NULL,
   `dept_id` int DEFAULT NULL,
   `staff_id` int DEFAULT NULL,
@@ -190,13 +189,14 @@ CREATE TABLE `teaching_plan` (
   `division` varchar(1) DEFAULT NULL,
   `subject` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `proposed_date` date DEFAULT NULL,
-  `content` varchar(200) DEFAULT NULL,
-  `actual_date` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `content_not_covered` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `reference` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `methodology` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `isNTD` tinyint(1) DEFAULT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `actual_date` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `content_not_covered` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `reference` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `methodology` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `co_mapping` varchar(10) DEFAULT NULL,
-  `remarks` varchar(5000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `remarks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `Verified_by_hod` varchar(500) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -204,50 +204,55 @@ CREATE TABLE `teaching_plan` (
 -- Dumping data for table `teaching_plan`
 --
 
-INSERT INTO `teaching_plan` (`lec_no`, `pk`, `dept_id`, `staff_id`, `current_year`, `sem_id`, `division`, `subject`, `proposed_date`, `content`, `actual_date`, `content_not_covered`, `reference`, `methodology`, `co_mapping`, `remarks`, `Verified_by_hod`) VALUES
-(1, 1, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-01-13', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(2, 2, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-01-17', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(3, 3, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-01-20', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(4, 4, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-01-24', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(5, 5, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-01-27', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(6, 6, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-01-31', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(7, 7, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-03', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(8, 8, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-07', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(9, 9, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-10', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(10, 10, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-14', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(11, 11, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-17', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(12, 12, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-21', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(13, 13, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-24', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(14, 14, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-02-28', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(15, 15, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-03', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(16, 16, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-07', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(17, 17, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-10', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(18, 18, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-14', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(19, 19, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-17', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(20, 20, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-21', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(21, 21, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-24', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(22, 22, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-28', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(23, 23, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-03-31', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(24, 24, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-04-04', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(25, 25, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-04-07', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(26, 26, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-04-11', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(27, 27, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-04-14', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(28, 28, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-04-18', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(29, 29, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-04-21', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(30, 30, NULL, NULL, NULL, NULL, NULL, 'BDA', '2025-04-25', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
---
--- Triggers `teaching_plan`
---
-DELIMITER $$
-CREATE TRIGGER `before_insert_teaching_plan` BEFORE INSERT ON `teaching_plan` FOR EACH ROW BEGIN
-   DECLARE max_lec_no INT;
-   -- Get the maximum `lec_no` and increment by 1
-   SELECT IFNULL(MAX(lec_no), 0) + 1 INTO max_lec_no FROM `teaching_plan`;
-   SET NEW.lec_no = max_lec_no;
-END
-$$
-DELIMITER ;
+INSERT INTO `teaching_plan` (`pk`, `dept_id`, `staff_id`, `current_year`, `sem_id`, `division`, `subject`, `proposed_date`, `isNTD`, `content`, `actual_date`, `content_not_covered`, `reference`, `methodology`, `co_mapping`, `remarks`, `Verified_by_hod`) VALUES
+(1, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-13', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-13', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-22', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-29', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-05', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(6, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-12', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(7, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-19', 1, 'holi', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(8, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-26', 1, 'janmashtami', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(9, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-05', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(10, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-12', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(11, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-19', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(12, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-26', 1, 'new year', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(13, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-02', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(14, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-09', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(15, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-16', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(16, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-23', 1, 'faces', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-13', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(18, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-13', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(19, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-22', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(20, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-29', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(21, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-05', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(22, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-12', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(23, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-19', 1, 'holi', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(24, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-26', 1, 'janmashtami', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(25, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-05', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(26, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-12', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(27, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-19', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(28, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-26', 1, 'new year', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(29, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-02', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(30, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-09', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(31, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-16', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(32, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-23', 1, 'faces', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(33, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-13', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(34, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-13', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(35, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-22', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(36, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-01-29', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(37, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-05', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(38, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-12', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(39, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-19', 1, 'holi', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(40, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-02-26', 1, 'janmashtami', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(41, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-05', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(42, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-12', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(43, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-19', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(44, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-03-26', 1, 'new year', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(45, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-02', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(46, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-09', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(47, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-16', 0, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(48, NULL, NULL, NULL, NULL, NULL, 'OS', '2025-04-23', 1, 'faces', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -325,7 +330,7 @@ ALTER TABLE `teaching_dates`
 -- AUTO_INCREMENT for table `teaching_plan`
 --
 ALTER TABLE `teaching_plan`
-  MODIFY `pk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `pk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- Constraints for dumped tables
