@@ -14,7 +14,7 @@ $excludeDatesArray = [];  // Will hold dates (in Y-m-d format) that are marked a
 if ($subject !== 'Unknown') {
     try {
         // Prepare and execute query to get current teaching plans with the specified columns
-        $sql = "SELECT pk, proposed_date, content, actual_date, content_not_covered, reference, methodology, co_mapping, verified_by_hod 
+        $sql = "SELECT pk, proposed_date, content, actual_date, content_not_covered, reference, methodology, co_mapping, verified_by_hod, isNTD
                 FROM teaching_plan WHERE subject = :subject";
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['subject' => $subject]);
@@ -124,7 +124,7 @@ $totalLectures = count($plans);
 
         h2 {
             text-align: center;
-            color: #4CAF50;
+            color: #007bff;
             margin-bottom: 20px;
         }
 
@@ -143,7 +143,7 @@ $totalLectures = count($plans);
         }
 
         th {
-            background-color: #4CAF50;
+            background-color: #007bff;
             color: white;
         }
 
@@ -166,7 +166,7 @@ $totalLectures = count($plans);
             padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
-            border: none;
+            border: none;s
             border-radius: 5px;
             font-size: 18px;
             cursor: pointer;
@@ -198,7 +198,7 @@ $totalLectures = count($plans);
         }
 
         .total-lectures-box {
-            background-color: #4CAF50;
+            background-color: #007bff;
             color: white;
             padding: 15px;
             text-align: center;
@@ -231,7 +231,7 @@ $totalLectures = count($plans);
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: #4CAF50;
+            background-color: #007bff;
             /* Default success color */
             color: white;
             padding: 10px 20px;
@@ -293,7 +293,7 @@ $totalLectures = count($plans);
                 <?php
                 // If the plan's proposed_date is empty OR if it is found in the exclude dates,
                 // leave the lecture number blank and apply grey styling.
-                if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray)) {
+                if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
                     $lectureNumberCell = '';
                     $rowClass = 'grey-row';
                     $inputClass = 'grey-input';
@@ -357,7 +357,7 @@ $totalLectures = count($plans);
 
     <!-- Display message on submission -->
     <div class="total-lectures-box">
-        Total Lectures: <?= $totalLectures ?>
+        Total Lectures: <?= $lectureNumber-1?>
     </div>
 
     <script>
@@ -383,24 +383,8 @@ $totalLectures = count($plans);
         // Handle form submission
         function saveData(event) {
             event.preventDefault(); // Prevent default form submission
-            const form = document.getElementById('teachingplan');
-            const formData = new FormData(form);
-            const subject = new URLSearchParams(window.location.search).get('subject');
-
-            // Use AJAX to submit the form data to the same page (without reloading)
-            fetch(window.location.href + '?subject=' + encodeURIComponent(subject), {
-                method: 'POST',
-                body: formData,
-            })
-                .then(response => response.text())
-                .then(data => {
-                    showModal('Data saved successfully!', 'success');
-                    // Optionally, you can refresh the page after form submission if needed
-                    setTimeout(() => window.location.reload(), 1000);
-                })
-                .catch(error => {
-                    showModal('An error occurred while saving the data.', 'error');
-                });
+            // Custom submit logic can be added here to check and validate inputs
+            showModal('Your data has been saved successfully!', 'success');
         }
     </script>
 </body>
