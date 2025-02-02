@@ -30,14 +30,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Fetch subject and days directly from the form
     $subject = isset($_POST['subject']) ? $_POST['subject'] : ''; // Subject input
     $days = isset($_POST['days']) ? $_POST['days'] : ''; // Days input (comma-separated)
-
+    
     // Validate subject and days
     if (empty($subject) || empty($days)) {
         echo "<p class='error-message'>Subject and Days are required.</p>";
         exit();
     }
 
-    // Fetch start_date, end_date, and exclude_date from the teaching_dates table
+    // Fetch start_date, end_date, and exclude_dates from the teaching_dates table
     try {
         $query = "SELECT start_date, end_date, exclude_dates FROM teaching_dates LIMIT 1"; // Fetch a single row, adjust as needed
         $stmt = $pdo->prepare($query);
@@ -49,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($row) {
             $start_date = $row['start_date'];
             $end_date = $row['end_date'];
-            $exclude_dates_str = $row['exclude_dates']; // Store fetched exclude dates as a string
+            $exclude_dates_str = $row['exclude_dates']; // Exclude dates stored as JSON key–value pairs (e.g. {"24-04-2025": "Holiday", "01-05-2025": "Festival"})
         } else {
             $error_message = "No start and end dates found in the teaching_dates table.";
             echo "<p class='error-message'>$error_message</p>";
@@ -68,27 +68,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    // Process exclude dates into an array and convert to Y-m-d format
-    $exclude_dates = json_decode($exclude_dates_str, true); // Exclude dates in json format from DB (e.g. ["01-11-2024", "15-11-2024"])
+    // Process exclude dates into an associative array and convert keys to YYYY-MM-DD format
+    $exclude_dates = json_decode($exclude_dates_str, true); // Expects a JSON object like: {"24-04-2025": "Holiday", "01-05-2025": "Festival"}
     $formatted_exclude_dates = [];
-    foreach ($exclude_dates as $date) {
-        $date_obj = DateTime::createFromFormat('d-m-Y', $date); // Parse the date from DD-MM-YYYY
-        if ($date_obj) {
-            $formatted_exclude_dates[] = $date_obj->format('Y-m-d'); // Convert to YYYY-MM-DD
+    if (is_array($exclude_dates)) {
+        foreach ($exclude_dates as $date => $reason) {
+            // Parse the date from dd-mm-yyyy format
+            $date_obj = DateTime::createFromFormat('d-m-Y', $date);
+            if ($date_obj) {
+                // Convert the date key to YYYY-MM-DD format and store the corresponding reason
+                $formatted_exclude_dates[$date_obj->format('Y-m-d')] = $reason;
+            }
         }
     }
 
-    // Calculate all dates between start_date and end_date
+    // Function to calculate all dates between start_date and end_date (inclusive)
     function getAllDates($start_date, $end_date) {
-        // Convert start and end dates to DateTime objects
         $start = new DateTime($start_date);
         $end = new DateTime($end_date);
         $all_dates = [];
 
-        // Loop through each day between start and end date
         while ($start <= $end) {
-            $date_str = $start->format('Y-m-d');
-            $all_dates[] = $date_str;
+            $all_dates[] = $start->format('Y-m-d');
             $start->modify('+1 day');
         }
 
@@ -98,36 +99,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get all dates between start_date and end_date
     $all_dates = getAllDates($start_date, $end_date);
 
-    // Split days into an array
-    $days_array = array_map('ucfirst', array_map('trim', explode(',', $days))); // Sanitize and capitalize days (e.g., 'monday' -> 'Monday')
+    // Split days into an array and sanitize (e.g., 'monday' becomes 'Monday')
+    $days_array = array_map('ucfirst', array_map('trim', explode(',', $days)));
 
     // Insert the dates into the teaching_plan table
     try {
         $stmt_insert = $pdo->prepare("INSERT INTO teaching_plan (subject, proposed_date, content) VALUES (:subject, :date, :content)");
 
         foreach ($all_dates as $date) {
-            // Get the full weekday name (e.g., 'Monday', 'Tuesday', 'Saturday', 'Sunday')
-            $current_day = (new DateTime($date))->format('l');  // Get the full weekday name (e.g., 'Monday')
+            // Get the full weekday name (e.g., 'Monday', 'Tuesday', etc.)
+            $current_day = (new DateTime($date))->format('l');
 
             // Exclude weekends (Saturday and Sunday)
             if ($current_day == 'Saturday' || $current_day == 'Sunday') {
-                continue;  // Skip weekends
+                continue;
             }
 
-            // If the current date matches the day of the week in the form input, insert it
+            // Only insert if the current weekday is one of the selected days from the form
             if (in_array($current_day, $days_array)) {
-                // Check if the date is in exclude_dates
-                $content = in_array($date, $formatted_exclude_dates) ? "Non Teaching Day" : ""; // Add content for exclude dates
-
-                // Bind the parameters and insert the data for Non Teaching Days
-                $stmt_insert->bindParam(':subject', $subject, PDO::PARAM_STR);  // Insert subject from the form
+                // Check if the current date exists in the formatted_exclude_dates array
+                // If so, fill the content with the reason (or "Non Teaching Day" if desired)
+                $content = isset($formatted_exclude_dates[$date]) ? $formatted_exclude_dates[$date] : "";
+                
+                // Bind parameters and execute the insertion
+                $stmt_insert->bindParam(':subject', $subject, PDO::PARAM_STR);
                 $stmt_insert->bindParam(':date', $date, PDO::PARAM_STR);
                 $stmt_insert->bindParam(':content', $content, PDO::PARAM_STR);
                 $stmt_insert->execute();
             }
         }
 
-        // Success message with the HTML structure provided
+        // Success message HTML
         echo "
         <!DOCTYPE html>
         <html lang='en'>
@@ -135,7 +137,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <meta charset='UTF-8'>
             <meta name='viewport' content='width=device-width, initial-scale=1.0'>
             <title>Teaching Plan Submitted</title>
-            <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'> <!-- For icons -->
+            <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'>
             <style>
                 body {
                     font-family: 'Arial', sans-serif;

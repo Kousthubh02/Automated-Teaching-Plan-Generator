@@ -160,7 +160,7 @@ if (isset($_GET['semester'])) {
                                 // Populate the subject dropdown with new options
                                 jsonResponse.forEach(subject => {
                                     const option = document.createElement("option");
-                                    option.value = subject.sub_id;
+                                    option.value = subject.sub;
                                     option.textContent = subject.sub;
                                     subjectDropdown.appendChild(option);
                                 });
