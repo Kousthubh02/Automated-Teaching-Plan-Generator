@@ -8,12 +8,14 @@ $message = '';
 $plans = [];
 $subject = isset($_GET['subject']) ? htmlspecialchars($_GET['subject']) : 'Unknown'; // Safe initialization of subject
 $editable = 0; // Default editable status
+$excludeDatesArray = [];  // Will hold dates (in Y-m-d format) that are marked as excluded
 
 // Check if a subject is set via GET request
 if ($subject !== 'Unknown') {
     try {
         // Prepare and execute query to get current teaching plans with the specified columns
-        $sql = "SELECT pk, proposed_date, content, actual_date, content_not_covered, reference, methodology, co_mapping, verified_by_hod FROM teaching_plan WHERE subject = :subject";
+        $sql = "SELECT pk, proposed_date, content, actual_date, content_not_covered, reference, methodology, co_mapping, verified_by_hod 
+                FROM teaching_plan WHERE subject = :subject";
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['subject' => $subject]);
 
@@ -33,6 +35,29 @@ if ($subject !== 'Unknown') {
         $editable = $stmt->fetchColumn();
     } catch (PDOException $e) {
         $message = 'Error fetching editable status: ' . $e->getMessage();
+    }
+    
+    // Fetch exclude dates for the subject from the teaching_dates table.
+    // It is assumed that the exclude_dates field stores a JSON object like: {"24-04-2025": "Holiday", "01-05-2025": "Festival"}
+    try {
+        $sql = "SELECT exclude_dates FROM teaching_dates WHERE subject = :subject LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['subject' => $subject]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row && !empty($row['exclude_dates'])) {
+            $excludeDates = json_decode($row['exclude_dates'], true);
+            if (is_array($excludeDates)) {
+                foreach ($excludeDates as $date => $reason) {
+                    // Convert the date (stored as dd-mm-yyyy) to Y-m-d for comparison
+                    $dateObj = DateTime::createFromFormat('d-m-Y', $date);
+                    if ($dateObj) {
+                        $excludeDatesArray[] = $dateObj->format('Y-m-d');
+                    }
+                }
+            }
+        }
+    } catch (PDOException $e) {
+        // Optionally handle error; here we'll simply ignore it
     }
 } else {
     $message = 'Please select a subject.';
@@ -75,16 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Close the connection
-$pdo = null;
-
 // Calculate total lectures count
 $totalLectures = count($plans);
+
+// Note: We are not closing $pdo here because we use it in the HTML below.
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -112,8 +135,7 @@ $totalLectures = count($plans);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        th,
-        td {
+        th, td {
             padding: 15px;
             text-align: left;
             border: 1px solid #ddd;
@@ -170,7 +192,6 @@ $totalLectures = count($plans);
             table {
                 font-size: 14px;
             }
-
             .editable-input {
                 font-size: 14px;
             }
@@ -240,7 +261,6 @@ $totalLectures = count($plans);
         }
     </style>
 </head>
-
 <body>
 
     <h2>Teaching Plans for <?= htmlspecialchars($subject ?: 'Unknown') ?></h2>
@@ -254,8 +274,8 @@ $totalLectures = count($plans);
 
     <!-- Teaching plan table and form -->
     <form id="teachingplan" method="post"
-        action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?subject=<?= urlencode($subject) ?>"
-        onsubmit="saveData(event)">
+          action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?subject=<?= urlencode($subject) ?>"
+          onsubmit="saveData(event)">
         <table>
             <tr>
                 <th>Lecture Number</th>
@@ -271,9 +291,9 @@ $totalLectures = count($plans);
             </tr>
             <?php foreach ($plans as $plan): ?>
                 <?php
-                // Determine if the row is a non-teaching day.
-                // For example, if the proposed_date is empty, then no lecture number is assigned.
-                if (empty($plan['proposed_date'])) {
+                // If the plan's proposed_date is empty OR if it is found in the exclude dates,
+                // leave the lecture number blank and apply grey styling.
+                if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray)) {
                     $lectureNumberCell = '';
                     $rowClass = 'grey-row';
                     $inputClass = 'grey-input';
@@ -287,7 +307,7 @@ $totalLectures = count($plans);
                     <td class="empty-lecture"><?= $lectureNumberCell ?></td>
                     <td>
                         <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]"
-                            value="<?= htmlspecialchars($plan['proposed_date']) ?>">
+                               value="<?= htmlspecialchars($plan['proposed_date']) ?>">
                         <?php
                         // Format the date from Y-m-d to d-m-Y if possible
                         $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
@@ -296,28 +316,28 @@ $totalLectures = count($plans);
                     </td>
                     <td>
                         <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
-                            placeholder="Enter content" <?= $editable == 0 ? 'readonly' : '' ?>
-                            oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
+                                  placeholder="Enter content" <?= $editable == 0 ? 'readonly' : '' ?>
+                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
                     </td>
                     <td></td>
                     <td>
                         <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
-                            placeholder="Enter content not covered" <?= $editable == 0 ? 'readonly' : '' ?>
-                            oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
+                                  placeholder="Enter content not covered" <?= $editable == 0 ? 'readonly' : '' ?>
+                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
                     </td>
                     <td>
                         <textarea class="editable-input <?= $inputClass ?>" name="reference[<?= $plan['pk'] ?>]"
-                            placeholder="Enter references" <?= $editable == 0 ? 'readonly' : '' ?>
-                            oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['reference'] ?: '') ?></textarea>
+                                  placeholder="Enter references" <?= $editable == 0 ? 'readonly' : '' ?>
+                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['reference'] ?: '') ?></textarea>
                     </td>
                     <td>
                         <textarea class="editable-input <?= $inputClass ?>" name="methodology[<?= $plan['pk'] ?>]"
-                            placeholder="Enter methodology" <?= $editable == 0 ? 'readonly' : '' ?>
-                            oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['methodology'] ?: '') ?></textarea>
+                                  placeholder="Enter methodology" <?= $editable == 0 ? 'readonly' : '' ?>
+                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['methodology'] ?: '') ?></textarea>
                     </td>
                     <td>
                         <select class="editable-input <?= $inputClass ?>" name="co_mapping[<?= $plan['pk'] ?>]"
-                            <?= $editable == 0 ? 'disabled' : '' ?>>
+                                <?= $editable == 0 ? 'disabled' : '' ?>>
                             <option value="">Select CO</option>
                             <option value="CO1" <?= $plan['co_mapping'] == 'CO1' ? 'selected' : '' ?>>CO1</option>
                             <option value="CO2" <?= $plan['co_mapping'] == 'CO2' ? 'selected' : '' ?>>CO2</option>
@@ -331,7 +351,6 @@ $totalLectures = count($plans);
                     <td></td>
                 </tr>
             <?php endforeach; ?>
-
         </table>
         <button type="submit" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
     </form>
@@ -383,8 +402,6 @@ $totalLectures = count($plans);
                     showModal('An error occurred while saving the data.', 'error');
                 });
         }
-
     </script>
 </body>
-
 </html>
