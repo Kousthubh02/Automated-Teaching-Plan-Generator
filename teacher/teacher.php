@@ -143,7 +143,6 @@ if (isset($_GET['semester'])) {
 
                 semesterDropdown.addEventListener("change", function () {
                     const selectedSemester = this.value;
-
                     if (selectedSemester) {
                         fetch(`?semester=${selectedSemester}`)
                             .then(response => response.json())
@@ -245,12 +244,13 @@ if (isset($_GET['semester'])) {
     </div>
 
     <script>
-        // Add day functionality for first week
+        // Use counters to assign unique indexes for new dynamic fields
+        let firstWeekCount = 1; // We already have index 0
         document.querySelector('.add-first-week-day-btn').addEventListener('click', function() {
             const newDayContainer = document.createElement('div');
             newDayContainer.classList.add('day-container');
             newDayContainer.innerHTML = `
-                <select name="first_week_details[][day]" required>
+                <select name="first_week_details[${firstWeekCount}][day]" required>
                     <option value="Monday">Monday</option>
                     <option value="Tuesday">Tuesday</option>
                     <option value="Wednesday">Wednesday</option>
@@ -259,10 +259,11 @@ if (isset($_GET['semester'])) {
                     <option value="Saturday">Saturday</option>
                     <option value="Sunday">Sunday</option>
                 </select>
-                <input type="number" name="first_week_details[][lectures]" placeholder="Lectures per Day" min="1" required>
+                <input type="number" name="first_week_details[${firstWeekCount}][lectures]" placeholder="Lectures per Day" min="1" required>
                 <button type="button" class="remove-day-btn">Remove</button>
             `;
             document.getElementById('first-week-days-container').appendChild(newDayContainer);
+            firstWeekCount++;
 
             // Add remove functionality
             newDayContainer.querySelector('.remove-day-btn').addEventListener('click', function() {
@@ -270,12 +271,12 @@ if (isset($_GET['semester'])) {
             });
         });
 
-        // Add day functionality for regular week
+        let regularWeekCount = 1; // We already have index 0
         document.querySelector('.add-regular-week-day-btn').addEventListener('click', function() {
             const newDayContainer = document.createElement('div');
             newDayContainer.classList.add('day-container');
             newDayContainer.innerHTML = `
-                <select name="regular_week_details[][day]" required>
+                <select name="regular_week_details[${regularWeekCount}][day]" required>
                     <option value="Monday">Monday</option>
                     <option value="Tuesday">Tuesday</option>
                     <option value="Wednesday">Wednesday</option>
@@ -284,10 +285,11 @@ if (isset($_GET['semester'])) {
                     <option value="Saturday">Saturday</option>
                     <option value="Sunday">Sunday</option>
                 </select>
-                <input type="number" name="regular_week_details[][lectures]" placeholder="Lectures per Day" min="1" required>
+                <input type="number" name="regular_week_details[${regularWeekCount}][lectures]" placeholder="Lectures per Day" min="1" required>
                 <button type="button" class="remove-day-btn">Remove</button>
             `;
             document.getElementById('regular-week-days-container').appendChild(newDayContainer);
+            regularWeekCount++;
 
             // Add remove functionality
             newDayContainer.querySelector('.remove-day-btn').addEventListener('click', function() {
