@@ -353,8 +353,6 @@ $totalLectures = count($plans);
             <?php endforeach; ?>
         </table>
         <button type="submit" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
-        <button type="button" class="submit-btn" onclick="view_PDF()" >View PDF</button>
-
     </form>
 
     <!-- Display message on submission -->
@@ -387,20 +385,6 @@ $totalLectures = count($plans);
             event.preventDefault(); // Prevent default form submission
             // Custom submit logic can be added here to check and validate inputs
             showModal('Your data has been saved successfully!', 'success');
-        }
-
-        //View PDF using TCPDF
-        function view_PDF(){
-            var form = document.getElementById('teachingplan');
-            var originalAction = form.action;
-            var originalTarget = form.target; // Store the original action and target
-            form.target = '_blank'; // Open the PDF in a new tab
-            form.action = 'view_PDF_borders.php'; // Temporarily set action to the PDF script
-            // make changes to view_PDF.php when complete, right now latest in above file
-            form.method = 'POST';
-            form.submit();
-            form.action = originalAction;
-            form.target = originalTarget; // Revert back to the original action and target
         }
     </script>
 </body>

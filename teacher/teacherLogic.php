@@ -183,7 +183,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <p>Your teaching plan has been successfully submitted for <strong>{$subject_name}</strong>.</p>
         </div>
         <a href='teacher.php' class='btn-link'>Go Back</a>
-        <a href='view_teaching_plan.php' class='btn-link'>View Teaching Plan</a>
+        <a href='../teachingPlan/teachingPlan.php' class='btn-link'>View Teaching Plan</a>
     </div>
 </body>
 </html>";
