@@ -237,7 +237,7 @@ if (isset($_GET['semester'])) {
             </select>
 
             <label for="subject">Subject</label>
-            <select id="subject_id" name="subject" required>
+            <select id="subject_id" name="subject_id" required>
                 <option value="">Select a subject</option>
             </select>
 

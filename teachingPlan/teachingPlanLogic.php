@@ -2,24 +2,28 @@
 // Include the database connection file
 require '../database/db_connection.php';
 
+// Get subject and subject_id from GET parameters
+$subject = isset($_GET['subject']) ? htmlspecialchars($_GET['subject']) : 'Unknown';
+$subject_id = filter_input(INPUT_GET, 'subject_id', FILTER_VALIDATE_INT);
+if (!$subject_id) {
+    die("Invalid subject ID");
+}
+
 // Initialize variables
 $lectureNumber = 1;
 $message = '';
 $plans = [];
-$subject = isset($_GET['subject']) ? htmlspecialchars($_GET['subject']) : 'Unknown'; // Safe initialization of subject
 $editable = 0; // Default editable status
 $excludeDatesArray = [];  // Will hold dates (in Y-m-d format) that are marked as excluded
 
 // Check if a subject is set via GET request
 if ($subject !== 'Unknown') {
     try {
-        // Prepare and execute query to get current teaching plans with the specified columns
+        // Get teaching plans for the selected subject
         $sql = "SELECT pk, proposed_date, content, actual_date, content_not_covered, reference, methodology, co_mapping, verified_by_hod, isNTD
                 FROM teaching_plan WHERE subject = :subject";
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['subject' => $subject]);
-
-        // Fetch data
         $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if (!$plans) {
             $message = 'No teaching plans available for the selected subject.';
@@ -28,7 +32,7 @@ if ($subject !== 'Unknown') {
         $message = 'Error fetching data: ' . $e->getMessage();
     }
 
-    // Get the current editable status from settings table
+    // Get the current editable status from the settings table
     try {
         $sql = "SELECT editable FROM settings WHERE id = 1"; // Assuming settings has id = 1
         $stmt = $pdo->query($sql);
@@ -48,7 +52,7 @@ if ($subject !== 'Unknown') {
             $excludeDates = json_decode($row['exclude_dates'], true);
             if (is_array($excludeDates)) {
                 foreach ($excludeDates as $date => $reason) {
-                    // Convert the date (stored as dd-mm-yyyy) to Y-m-d for comparison
+                    // Convert the date from dd-mm-yyyy to Y-m-d
                     $dateObj = DateTime::createFromFormat('d-m-Y', $date);
                     if ($dateObj) {
                         $excludeDatesArray[] = $dateObj->format('Y-m-d');
@@ -63,345 +67,500 @@ if ($subject !== 'Unknown') {
     $message = 'Please select a subject.';
 }
 
-// Handle form submission (Save data)
+// Handle form submission (Save data) via AJAX or normal POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Process the data and save it to the database here
-    try {
-        foreach ($_POST['content'] as $pk => $content) {
-            $content_not_covered = $_POST['content_not_covered'][$pk];
-            $reference = $_POST['reference'][$pk];
-            $methodology = $_POST['methodology'][$pk];
-            $co_mapping = $_POST['co_mapping'][$pk];
 
-            // Prepare your update query here
-            $sql = "UPDATE teaching_plan SET 
-                    content = :content,
-                    content_not_covered = :content_not_covered,
-                    reference = :reference,
-                    methodology = :methodology,
-                    co_mapping = :co_mapping 
-                    WHERE pk = :pk";
+    // --- 1. Process Teaching Plan Update ---
+    if (isset($_POST['content'])) {
+        try {
+            foreach ($_POST['content'] as $pk => $content) {
+                $content_not_covered = $_POST['content_not_covered'][$pk];
+                // Use "plan_references" for the checkboxes to avoid conflicting with subject references
+                $plan_reference = isset($_POST['plan_references'][$pk]) ? implode(', ', $_POST['plan_references'][$pk]) : '';
+                $methodology = isset($_POST['methodology'][$pk]) ? implode(', ', $_POST['methodology'][$pk]) : '';
+                $co_mapping = $_POST['co_mapping'][$pk];
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                'content' => $content,
-                'content_not_covered' => $content_not_covered,
-                'reference' => $reference,
-                'methodology' => $methodology,
-                'co_mapping' => $co_mapping,
-                'pk' => $pk
-            ]);
+                // Update each teaching plan record
+                $sql = "UPDATE teaching_plan SET 
+                        content = :content,
+                        content_not_covered = :content_not_covered,
+                        reference = :reference,
+                        methodology = :methodology,
+                        co_mapping = :co_mapping 
+                        WHERE pk = :pk";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    'content' => $content,
+                    'content_not_covered' => $content_not_covered,
+                    'reference' => $plan_reference,
+                    'methodology' => $methodology,
+                    'co_mapping' => $co_mapping,
+                    'pk' => $pk
+                ]);
+            }
+            $message = 'Teaching plan data has been successfully saved.';
+        } catch (PDOException $e) {
+            $message = 'Error saving teaching plan data: ' . $e->getMessage();
         }
-        $message = 'Data has been successfully saved.';
-        header("Location: " . $_SERVER['PHP_SELF'] . "?subject=" . urlencode($subject));
-        exit();
-    } catch (PDOException $e) {
-        $message = 'Error saving data: ' . $e->getMessage();
+    }
+    
+    // --- 2. Process Subject References Update ---
+    if (isset($_POST['subject_references'])) {
+        if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
+            die("Invalid subject ID");
+        }
+        $sub_id_post = filter_input(INPUT_POST, 'sub_id', FILTER_VALIDATE_INT);
+        try {
+            // Prepare the SQL statement for inserting/updating references
+            $sql = "INSERT INTO reference_table (sub_id, ref_code, ref_content)
+                    VALUES (:sub_id, :ref_code, :ref_content)
+                    ON DUPLICATE KEY UPDATE ref_content = :ref_content";
+            $stmt = $pdo->prepare($sql);
+            // Loop over each reference submitted (this includes both references and textbooks)
+            foreach ($_POST['subject_references'] as $ref_code => $ref_content) {
+                $stmt->execute([
+                    ':sub_id' => $sub_id_post,
+                    ':ref_code' => $ref_code,
+                    ':ref_content' => trim($ref_content)
+                ]);
+            }
+            $message .= ' References updated successfully.';
+        } catch (PDOException $e) {
+            $message .= ' Error updating references: ' . $e->getMessage();
+        }
+    }
+    
+    // Return response based on the request type (AJAX or normal)
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+         header('Content-Type: application/json');
+         echo json_encode(['message' => $message]);
+         exit();
+    } else {
+         header("Location: " . $_SERVER['PHP_SELF'] . "?subject=" . urlencode($subject) . "&subject_id=" . $subject_id);
+         exit();
     }
 }
 
-// Calculate total lectures count
-$totalLectures = count($plans);
+// Fetch existing subject references so that the form can be pre-filled
+try {
+    $sql = "SELECT ref_code, ref_content FROM reference_table WHERE sub_id = :sub_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':sub_id' => $subject_id]);
+    $references = $stmt->fetchAll(PDO::FETCH_KEY_PAIR) ?? [];
+} catch (PDOException $e) {
+    $references = [];
+}
 
-// Note: We are not closing $pdo here because we use it in the HTML below.
+// Count total lectures (based solely on the plans array)
+$totalLectures = count($plans);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teaching Plans</title>
-    <style>
-        /* Modal and table styles */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7fa;
-            margin: 0;
-            padding: 20px;
-            color: #333;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teaching Plans</title>
+  <style>
+    /* Reduced Padding and Margin for a more compact layout */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 10px; /* Reduced padding */
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 10px; /* Reduced margin */
+    }
+    table {
+      width: 100%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      padding: 4px 6px; /* Reduced padding in table cells */
+      text-align: left;
+      border: 1px solid #ddd;
+      background-color: #fff;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+    .editable-input {
+      width: 100%;
+      padding: 6px; /* Reduced padding */
+      font-size: 14px;
+      box-sizing: border-box;
+      resize: none;
+    }
+    input[type="date"] {
+      position: relative;
+      z-index: 1;
+    }
+    .submit-btn {
+      display: block;
+      margin: 10px auto; /* Reduced margin */
+      padding: 8px 16px; /* Slightly reduced padding */
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px; /* Slightly reduced font size */
+      cursor: pointer;
+    }
+    .submit-btn:hover {
+      background-color: #45a049;
+    }
+    .grey-row {
+      background-color: #d3d3d3;
+    }
+    .editable-input.grey-input {
+      background-color: #b0b0b0;
+    }
+    .empty-lecture {
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      table {
+        font-size: 14px;
+      }
+      .editable-input {
+        font-size: 12px;
+      }
+    }
+    .total-lectures-box {
+      background-color: #007bff;
+      color: white;
+      padding: 10px; /* Reduced padding */
+      text-align: center;
+      font-size: 16px; /* Reduced font size */
+      margin-top: 10px;
+      border-radius: 5px;
+      width: 300px;
+      margin: 10px auto;
+    }
+    /* References Table Styling */
+    .references-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .references-table th {
+        background-color: #007BFF;
+        color: white;
+        padding: 6px; /* Reduced padding */
+        text-align: center;
+        font-size: 14px;
+    }
+    .references-table td {
+        padding: 6px; /* Reduced padding */
+        border: 1px solid #ddd;
+        background-color: #fff;
+        text-align: center;
+    }
+    .references-label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 3px; /* Reduced margin */
+        color: #333;
+    }
+    .references-textarea {
+        width: 90%;
+        height: 50px;
+        padding: 4px; /* Reduced padding */
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background: #fff;
+        resize: none;
+        transition: 0.3s;
+    }
+    .references-textarea:focus {
+        border-color: #007BFF;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+    @media (max-width: 768px) {
+        .references-table {
+            font-size: 12px;
         }
-
-        h2 {
-            text-align: center;
-            color: #007bff;
-            margin-bottom: 20px;
+        .references-textarea {
+            font-size: 12px;
         }
-
-        table {
-            width: 100%;
-            margin: 0 auto;
-            border-collapse: collapse;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border: 1px solid #ddd;
-            background-color: #fff;
-        }
-
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .editable-input {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: none;
-        }
-
-        input[type="date"] {
-            position: relative;
-            z-index: 1;
-        }
-
-        .submit-btn {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;s
-            border-radius: 5px;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .submit-btn:hover {
-            background-color: #45a049;
-        }
-
-        .grey-row {
-            background-color: #d3d3d3;
-        }
-
-        .editable-input.grey-input {
-            background-color: #b0b0b0;
-        }
-
-        .empty-lecture {
-            text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            table {
-                font-size: 14px;
-            }
-            .editable-input {
-                font-size: 14px;
-            }
-        }
-
-        .total-lectures-box {
-            background-color: #007bff;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 18px;
-            margin-top: 20px;
-            border-radius: 5px;
-            width: 300px;
-            margin: 20px auto;
-        }
-
-        .pdf-btn {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .pdf-btn:hover {
-            background-color: #0056b3;
-        }
-
-        /* Styling for the modal */
-        .modal {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #007bff;
-            /* Default success color */
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            display: none;
-            z-index: 1000;
-            font-size: 16px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-            opacity: 1;
-            transition: opacity 0.5s ease-out, top 0.5s ease-out;
-        }
-
-        .modal.error {
-            background-color: #f44336;
-            /* Error color */
-        }
-
-        .modal.success {
-            background-color: #4CAF50;
-            /* Success color */
-        }
-
-        /* Add fade-out effect */
-        .modal.fade-out {
-            opacity: 0;
-            top: 0;
-        }
-    </style>
+    }
+    /* PDF button styling */
+    .pdf-btn {
+      display: block;
+      margin: 10px auto; /* Reduced margin */
+      padding: 8px 16px; /* Reduced padding */
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .pdf-btn:hover {
+      background-color: #0056b3;
+    }
+    /* Modal Popup Styling */
+    .modal {
+      position: fixed;
+      top: 10px; /* Adjusted for reduced spacing */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #007bff;
+      color: white;
+      padding: 8px 16px; /* Reduced padding */
+      border-radius: 5px;
+      display: none;
+      z-index: 1000;
+      font-size: 14px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      opacity: 1;
+      transition: opacity 0.5s ease-out, top 0.5s ease-out;
+    }
+    .modal.error {
+      background-color: #f44336;
+    }
+    .modal.success {
+      background-color: #4CAF50;
+    }
+    .modal.fade-out {
+      opacity: 0;
+      top: 0;
+    }
+  </style>
 </head>
 <body>
+  <h2>Teaching Plans for <?= htmlspecialchars($subject ?: 'Unknown') ?></h2>
 
-    <h2>Teaching Plans for <?= htmlspecialchars($subject ?: 'Unknown') ?></h2>
-
-    <!-- Small Popup Modal -->
-    <div id="messageModal" class="modal">
-        <div class="modal-content">
-            <span id="messageText"></span>
-        </div>
+  <!-- Popup Modal for messages -->
+  <div id="messageModal" class="modal">
+    <div class="modal-content">
+      <span id="messageText"></span>
     </div>
+  </div>
 
-    <!-- Teaching plan table and form -->
-    <form id="teachingplan" method="post"
-          action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?subject=<?= urlencode($subject) ?>"
-          onsubmit="saveData(event)">
-        <table>
-            <tr>
-                <th>Lecture Number</th>
-                <th>Proposed Date</th>
-                <th>Content</th>
-                <th>Actual Date</th>
-                <th>Content Not Covered</th>
-                <th>Reference</th>
-                <th>Methodology</th>
-                <th>CO Mapping</th>
-                <th>Remarks</th>
-                <th>Verified by HOD</th>
-            </tr>
-            <?php foreach ($plans as $plan): ?>
-                <?php
-                // If the plan's proposed_date is empty OR if it is found in the exclude dates,
-                // leave the lecture number blank and apply grey styling.
-                if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
-                    $lectureNumberCell = '';
-                    $rowClass = 'grey-row';
-                    $inputClass = 'grey-input';
-                } else {
-                    $lectureNumberCell = $lectureNumber++;
-                    $rowClass = '';
-                    $inputClass = '';
-                }
-                ?>
-                <tr class="<?= $rowClass ?>">
-                    <td class="empty-lecture"><?= $lectureNumberCell ?></td>
-                    <td>
-                        <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]"
-                               value="<?= htmlspecialchars($plan['proposed_date']) ?>">
-                        <?php
-                        // Format the date from Y-m-d to d-m-Y if possible
-                        $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
-                        echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
-                        ?>
-                    </td>
-                    <td>
-                        <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
-                                  placeholder="Enter content" <?= $editable == 0 ? 'readonly' : '' ?>
-                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
-                    </td>
-                    <td></td>
-                    <td>
-                        <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
-                                  placeholder="Enter content not covered" <?= $editable == 0 ? 'readonly' : '' ?>
-                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
-                    </td>
-                    <td>
-                        <textarea class="editable-input <?= $inputClass ?>" name="reference[<?= $plan['pk'] ?>]"
-                                  placeholder="Enter references" <?= $editable == 0 ? 'readonly' : '' ?>
-                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['reference'] ?: '') ?></textarea>
-                    </td>
-                    <td>
-                        <textarea class="editable-input <?= $inputClass ?>" name="methodology[<?= $plan['pk'] ?>]"
-                                  placeholder="Enter methodology" <?= $editable == 0 ? 'readonly' : '' ?>
-                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['methodology'] ?: '') ?></textarea>
-                    </td>
-                    <td>
-                        <select class="editable-input <?= $inputClass ?>" name="co_mapping[<?= $plan['pk'] ?>]"
-                                <?= $editable == 0 ? 'disabled' : '' ?>>
-                            <option value="">Select CO</option>
-                            <option value="CO1" <?= $plan['co_mapping'] == 'CO1' ? 'selected' : '' ?>>CO1</option>
-                            <option value="CO2" <?= $plan['co_mapping'] == 'CO2' ? 'selected' : '' ?>>CO2</option>
-                            <option value="CO3" <?= $plan['co_mapping'] == 'CO3' ? 'selected' : '' ?>>CO3</option>
-                            <option value="CO4" <?= $plan['co_mapping'] == 'CO4' ? 'selected' : '' ?>>CO4</option>
-                            <option value="CO5" <?= $plan['co_mapping'] == 'CO5' ? 'selected' : '' ?>>CO5</option>
-                            <option value="CO6" <?= $plan['co_mapping'] == 'CO6' ? 'selected' : '' ?>>CO6</option>
-                        </select>
-                    </td>
-                    <td></td>
-                    <td></td>
+  <!-- Teaching Plan and References Form -->
+  <form id="teachingplan" method="post" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?subject=<?= urlencode($subject) ?>&subject_id=<?= $subject_id ?>">
+    <table>
+      <tr>
+        <th>Lecture Number</th>
+        <th>Proposed Date</th>
+        <th>Content</th>
+        <th>Actual Date</th>
+        <th>Content Not Covered</th>
+        <th>Reference</th>
+        <th>Methodology</th>
+        <th>CO Mapping</th>
+        <th>Remarks</th>
+        <th>Verified by HOD</th>
+      </tr>
+      <?php foreach ($plans as $plan): ?>
+        <?php
+          // If the proposed_date is empty, in the exclude dates list, or flagged as NTD, render a grey row without a lecture number.
+          if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
+              $lectureNumberCell = '';
+              $rowClass = 'grey-row';
+              $inputClass = 'grey-input';
+          } else {
+              $lectureNumberCell = $lectureNumber++;
+              $rowClass = '';
+              $inputClass = '';
+          }
+        ?>
+        <tr class="<?= $rowClass ?>">
+          <td class="empty-lecture"><?= $lectureNumberCell ?></td>
+          <td>
+            <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]" value="<?= htmlspecialchars($plan['proposed_date']) ?>">
+            <?php
+              // Format date from Y-m-d to d-m-Y (if possible)
+              $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
+              echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
+            ?>
+          </td>
+          <td>
+            <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]" placeholder="Enter content" <?= $editable == 0 ? 'readonly' : '' ?>
+              oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
+          </td>
+          <td></td>
+          <td>
+            <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]" placeholder="Enter content not covered" <?= $editable == 0 ? 'readonly' : '' ?>
+              oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
+          </td>
+          <td>
+            <table>
+                <tr>
+                    <th></th>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <th><?= $i ?></th>
+                    <?php endfor; ?>
                 </tr>
-            <?php endforeach; ?>
-        </table>
-        <button type="submit" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
-        <button type="button" class="submit-btn" onclick="view_PDF()" >View PDF</button>
+                <tr>
+                    <td>Textbook</td>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <td>
+                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="t<?= $i ?>"
+                                <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>
+                                <?= $editable == 0 ? 'disabled' : '' ?>>
+                            T<?= $i ?>
+                        </td>
+                    <?php endfor; ?>
+                </tr>
+                <tr>
+                    <td>References</td>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <td>
+                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="r<?= $i ?>"
+                                <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>
+                                <?= $editable == 0 ? 'disabled' : '' ?>>
+                            R<?= $i ?>
+                        </td>
+                    <?php endfor; ?>
+                </tr>
+            </table>
+          </td>
+          <td>
+            <?php 
+                $selectedMethods = explode(', ', $plan['methodology'] ?? '');
+            ?>
+            <label>
+                <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Board" <?= in_array('Board', $selectedMethods) ? 'checked' : '' ?> <?= $editable == 0 ? 'disabled' : '' ?>> Board
+            </label><br>
+            <label>
+                <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="PPT" <?= in_array('PPT', $selectedMethods) ? 'checked' : '' ?> <?= $editable == 0 ? 'disabled' : '' ?>> PPT
+            </label><br>
+            <label>
+                <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Other" <?= in_array('Other', $selectedMethods) ? 'checked' : '' ?> <?= $editable == 0 ? 'disabled' : '' ?>> Other
+            </label>
+          </td>
+          <td>
+            <select class="editable-input <?= $inputClass ?>" name="co_mapping[<?= $plan['pk'] ?>]" <?= $editable == 0 ? 'disabled' : '' ?>>
+              <option value="">Select CO</option>
+              <option value="CO1" <?= $plan['co_mapping'] == 'CO1' ? 'selected' : '' ?>>CO1</option>
+              <option value="CO2" <?= $plan['co_mapping'] == 'CO2' ? 'selected' : '' ?>>CO2</option>
+              <option value="CO3" <?= $plan['co_mapping'] == 'CO3' ? 'selected' : '' ?>>CO3</option>
+              <option value="CO4" <?= $plan['co_mapping'] == 'CO4' ? 'selected' : '' ?>>CO4</option>
+              <option value="CO5" <?= $plan['co_mapping'] == 'CO5' ? 'selected' : '' ?>>CO5</option>
+              <option value="CO6" <?= $plan['co_mapping'] == 'CO6' ? 'selected' : '' ?>>CO6</option>
+            </select>
+          </td>
+          <td></td>
+          <td></td>
+        </tr>
+      <?php endforeach; ?>
+    </table>
+    
+    <h2>References</h2>
+    <!-- Hidden input to pass the subject ID -->
+    <input type="hidden" name="sub_id" value="<?= $subject_id ?>">
+    <table class="references-table">
+        <tr>
+            <th>References</th>
+            <th>Textbooks</th>
+        </tr>
+        <tr>
+            <td>
+                <?php 
+                $referenceCodes = ['R1', 'R2', 'R3', 'R4', 'R5'];
+                foreach ($referenceCodes as $code): ?>
+                    <label class="references-label"><?= $code ?></label>
+                    <textarea class="references-textarea" name="subject_references[<?= $code ?>]" 
+                        placeholder="Enter reference text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+                <?php endforeach; ?>
+            </td>
+            <td>
+                <?php 
+                $textbookCodes  = ['T1', 'T2', 'T3', 'T4', 'T5'];
+                foreach ($textbookCodes as $code): ?>
+                    <label class="references-label"><?= $code ?></label>
+                    <textarea class="references-textarea" name="subject_references[<?= $code ?>]" 
+                        placeholder="Enter textbook text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+                <?php endforeach; ?>
+            </td>
+        </tr>
+    </table>
+    
+    <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
+    <button type="button" class="submit-btn" onclick="view_PDF()">View PDF</button>
+  </form>
 
-    </form>
+  <!-- Display total lectures -->
+  <div class="total-lectures-box">
+    Total Lectures: <?= $lectureNumber - 1 ?>
+  </div>
 
-    <!-- Display message on submission -->
-    <div class="total-lectures-box">
-        Total Lectures: <?= $lectureNumber-1?>
-    </div>
+  <script>
+    // Attach a submit event listener to handle AJAX saving
+    document.getElementById('teachingplan').addEventListener('submit', saveData);
 
-    <script>
-        // Display modal with message
-        function showModal(message, type) {
-            const modal = document.getElementById('messageModal');
-            const messageText = document.getElementById('messageText');
-            modal.style.display = 'block';
-            messageText.innerText = message;
-            modal.classList.add(type); // Add success or error class
-            setTimeout(() => {
-                modal.style.opacity = 0;
-                modal.style.top = '-20px';
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                    modal.style.opacity = 1;
-                    modal.style.top = '20px';
-                    modal.classList.remove(type);
-                }, 500);
-            }, 3000);
-        }
+    function saveData(event) {
+      event.preventDefault(); // Prevent the form's default submission
+      const form = event.target;
+      const formData = new FormData(form);
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true; // Disable the button while saving
 
-        // Handle form submission
-        function saveData(event) {
-            event.preventDefault(); // Prevent default form submission
-            // Custom submit logic can be added here to check and validate inputs
-            showModal('Your data has been saved successfully!', 'success');
-        }
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        showModal(data.message, 'success');
+        saveBtn.disabled = false;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showModal('Error saving data.', 'error');
+        saveBtn.disabled = false;
+      });
+    }
 
-        //View PDF using TCPDF
-        function view_PDF(){
-            var form = document.getElementById('teachingplan');
-            var originalAction = form.action;
-            var originalTarget = form.target; // Store the original action and target
-            form.target = '_blank'; // Open the PDF in a new tab
-            form.action = 'view_PDF_borders.php'; // Temporarily set action to the PDF script
-            // make changes to view_PDF.php when complete, right now latest in above file
-            form.method = 'POST';
-            form.submit();
-            form.action = originalAction;
-            form.target = originalTarget; // Revert back to the original action and target
-        }
-    </script>
+    // Function to display the modal popup
+    function showModal(message, type) {
+      const modal = document.getElementById('messageModal');
+      const messageText = document.getElementById('messageText');
+      modal.style.display = 'block';
+      messageText.innerText = message;
+      modal.classList.add(type);
+      setTimeout(() => {
+        modal.style.opacity = 0;
+        modal.style.top = '-20px';
+        setTimeout(() => {
+          modal.style.display = 'none';
+          modal.style.opacity = 1;
+          modal.style.top = '10px';
+          modal.classList.remove(type);
+        }, 500);
+      }, 3000);
+    }
+
+    // Function to view PDF (opens in a new tab)
+    function view_PDF(){
+      var form = document.getElementById('teachingplan');
+      var originalAction = form.action;
+      var originalTarget = form.target;
+      form.target = '_blank';
+      form.action = 'view_PDF_borders.php';
+      form.method = 'POST';
+      form.submit();
+      form.action = originalAction;
+      form.target = originalTarget;
+    }
+  </script>
 </body>
 </html>
