@@ -40,7 +40,7 @@ if ($subject !== 'Unknown') {
     } catch (PDOException $e) {
         $message = 'Error fetching editable status: ' . $e->getMessage();
     }
-
+    
     // Fetch exclude dates for the subject from the teaching_dates table.
     // It is assumed that the exclude_dates field stores a JSON object like: {"24-04-2025": "Holiday", "01-05-2025": "Festival"}
     try {
@@ -81,20 +81,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // Update each teaching plan record
                 $sql = "UPDATE teaching_plan SET 
-                            content = :content,
-                            content_not_covered = :content_not_covered,
-                            reference = :reference,
-                            methodology = :methodology,
-                            co_mapping = :co_mapping 
-                            WHERE pk = :pk";
+                        content = :content,
+                        content_not_covered = :content_not_covered,
+                        reference = :reference,
+                        methodology = :methodology,
+                        co_mapping = :co_mapping 
+                        WHERE pk = :pk";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
-                    'content'             => $content,
+                    'content' => $content,
                     'content_not_covered' => $content_not_covered,
-                    'reference'           => $plan_reference,
-                    'methodology'         => $methodology,
-                    'co_mapping'          => $co_mapping,
-                    'pk'                  => $pk
+                    'reference' => $plan_reference,
+                    'methodology' => $methodology,
+                    'co_mapping' => $co_mapping,
+                    'pk' => $pk
                 ]);
             }
             $message = 'Teaching plan data has been successfully saved.';
@@ -102,76 +102,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = 'Error saving teaching plan data: ' . $e->getMessage();
         }
     }
-
-// --- 2. Process Subject References Update ---
-if (isset($_POST['subject_references'])) { // Begin processing subject references update
-  if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
-      die("Invalid subject ID");
-  }
-  $sub_id_post = filter_input(INPUT_POST, 'sub_id', FILTER_VALIDATE_INT);
-  try { // Begin try block for insert/update
-      // Loop over each reference submitted (this includes both references and textbooks)
-      foreach ($_POST['subject_references'] as $ref_code => $ref_content) {
-          $trimmed_content = trim($ref_content);
-          // Check if a record already exists for this subject and reference code
-          $sql_check = "SELECT ref_code FROM reference_table WHERE sub_id = :sub_id AND ref_code = :ref_code";
-          $stmt_check = $pdo->prepare($sql_check);
-          $stmt_check->execute([
-              ':sub_id'   => $sub_id_post,
-              ':ref_code' => $ref_code
-          ]);
-          if ($stmt_check->fetch()) {
-              // Record exists: update it
-              $sql_update = "UPDATE reference_table 
-                             SET ref_content = :ref_content 
-                             WHERE sub_id = :sub_id AND ref_code = :ref_code";
-              $stmt_update = $pdo->prepare($sql_update);
-              $stmt_update->execute([
-                  ':ref_content' => $trimmed_content,
-                  ':sub_id'      => $sub_id_post,
-                  ':ref_code'    => $ref_code
-              ]);
-          } else {
-              // No record exists: insert new row
-              $sql_insert = "INSERT INTO reference_table (sub_id, ref_code, ref_content)
-                             VALUES (:sub_id, :ref_code, :ref_content)";
-              $stmt_insert = $pdo->prepare($sql_insert);
-              $stmt_insert->execute([
-                  ':sub_id'      => $sub_id_post,
-                  ':ref_code'    => $ref_code,
-                  ':ref_content' => $trimmed_content
-              ]);
-          }
-      }
-      $message .= ' References updated successfully.';
-  } catch (PDOException $e) {
-      $message .= ' Error updating references: ' . $e->getMessage();
-  }
-} // End processing subject references update
-
-// Return response based on the request type (AJAX or normal)
-if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-  header('Content-Type: application/json');
-  echo json_encode(['message' => $message]);
-  exit();
-} else {
-  header("Location: " . $_SERVER['PHP_SELF'] . "?subject=" . urlencode($subject) . "&subject_id=" . $subject_id);
-  exit();
+    
+    // --- 2. Process Subject References Update ---
+    if (isset($_POST['subject_references'])) {
+        if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
+            die("Invalid subject ID");
+        }
+        $sub_id_post = filter_input(INPUT_POST, 'sub_id', FILTER_VALIDATE_INT);
+        try {
+            // Prepare the SQL statement for inserting/updating references
+            $sql = "INSERT INTO reference_table (sub_id, ref_code, ref_content)
+                    VALUES (:sub_id, :ref_code, :ref_content)
+                    ON DUPLICATE KEY UPDATE ref_content = :ref_content";
+            $stmt = $pdo->prepare($sql);
+            // Loop over each reference submitted (this includes both references and textbooks)
+            foreach ($_POST['subject_references'] as $ref_code => $ref_content) {
+                $stmt->execute([
+                    ':sub_id' => $sub_id_post,
+                    ':ref_code' => $ref_code,
+                    ':ref_content' => trim($ref_content)
+                ]);
+            }
+            $message .= ' References updated successfully.';
+        } catch (PDOException $e) {
+            $message .= ' Error updating references: ' . $e->getMessage();
+        }
+    }
+    
+    // Return response based on the request type (AJAX or normal)
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+         header('Content-Type: application/json');
+         echo json_encode(['message' => $message]);
+         exit();
+    } else {
+         header("Location: " . $_SERVER['PHP_SELF'] . "?subject=" . urlencode($subject) . "&subject_id=" . $subject_id);
+         exit();
+    }
 }
-} // End of POST request handling
 
 // Fetch existing subject references so that the form can be pre-filled
 try {
-  $sql = "SELECT ref_code, ref_content FROM reference_table WHERE sub_id = :sub_id";
-  $stmt = $pdo->prepare($sql);
-  $stmt->execute([':sub_id' => $subject_id]);
-  $references = $stmt->fetchAll(PDO::FETCH_KEY_PAIR) ?? [];
+    $sql = "SELECT ref_code, ref_content FROM reference_table WHERE sub_id = :sub_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':sub_id' => $subject_id]);
+    $references = $stmt->fetchAll(PDO::FETCH_KEY_PAIR) ?? [];
 } catch (PDOException $e) {
-  $references = [];
+    $references = [];
 }
-
-
-
 
 // Count total lectures (based solely on the plans array)
 $totalLectures = count($plans);
@@ -179,7 +156,6 @@ $totalLectures = count($plans);
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -190,181 +166,141 @@ $totalLectures = count($plans);
       font-family: Arial, sans-serif;
       background-color: #f4f7fa;
       margin: 0;
-      padding: 10px;
-      /* Reduced padding */
+      padding: 10px; /* Reduced padding */
       color: #333;
     }
-
     h2 {
       text-align: center;
       color: #007bff;
-      margin-bottom: 10px;
-      /* Reduced margin */
+      margin-bottom: 10px; /* Reduced margin */
     }
-
     table {
       width: 100%;
       margin: 0 auto;
       border-collapse: collapse;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-
-    th,
-    td {
-      padding: 4px 6px;
-      /* Reduced padding in table cells */
+    th, td {
+      padding: 4px 6px; /* Reduced padding in table cells */
       text-align: left;
       border: 1px solid #ddd;
       background-color: #fff;
     }
-
     th {
       background-color: #007bff;
       color: white;
     }
-
     input[type="checkbox"] {
       transform: scale(1.2);
     }
-
     .editable-input {
       width: 100%;
-      padding: 6px;
-      /* Reduced padding */
+      padding: 6px; /* Reduced padding */
       font-size: 14px;
       box-sizing: border-box;
       resize: none;
     }
-
     input[type="date"] {
       position: relative;
       z-index: 1;
     }
-
     .submit-btn {
       display: block;
-      margin: 10px auto;
-      /* Reduced margin */
-      padding: 8px 16px;
-      /* Slightly reduced padding */
+      margin: 10px auto; /* Reduced margin */
+      padding: 8px 16px; /* Slightly reduced padding */
       background-color: #4CAF50;
       color: white;
       border: none;
       border-radius: 5px;
-      font-size: 16px;
-      /* Slightly reduced font size */
+      font-size: 16px; /* Slightly reduced font size */
       cursor: pointer;
     }
-
     .submit-btn:hover {
       background-color: #45a049;
     }
-
     .grey-row {
       background-color: #d3d3d3;
     }
-
     .editable-input.grey-input {
       background-color: #b0b0b0;
     }
-
     .empty-lecture {
       text-align: center;
     }
-
     @media (max-width: 768px) {
       table {
         font-size: 14px;
       }
-
       .editable-input {
         font-size: 12px;
       }
     }
-
     .total-lectures-box {
       background-color: #007bff;
       color: white;
-      padding: 10px;
-      /* Reduced padding */
+      padding: 10px; /* Reduced padding */
       text-align: center;
-      font-size: 16px;
-      /* Reduced font size */
+      font-size: 16px; /* Reduced font size */
       margin-top: 10px;
       border-radius: 5px;
       width: 300px;
       margin: 10px auto;
     }
-
     /* References Table Styling */
     .references-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-
     .references-table th {
-      background-color: #007BFF;
-      color: white;
-      padding: 6px;
-      /* Reduced padding */
-      text-align: center;
-      font-size: 14px;
+        background-color: #007BFF;
+        color: white;
+        padding: 6px; /* Reduced padding */
+        text-align: center;
+        font-size: 14px;
     }
-
     .references-table td {
-      padding: 6px;
-      /* Reduced padding */
-      border: 1px solid #ddd;
-      background-color: #fff;
-      text-align: center;
+        padding: 6px; /* Reduced padding */
+        border: 1px solid #ddd;
+        background-color: #fff;
+        text-align: center;
     }
-
     .references-label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 3px;
-      /* Reduced margin */
-      color: #333;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 3px; /* Reduced margin */
+        color: #333;
     }
-
     .references-textarea {
-      width: 90%;
-      height: 50px;
-      padding: 4px;
-      /* Reduced padding */
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background: #fff;
-      resize: none;
-      transition: 0.3s;
+        width: 90%;
+        height: 50px;
+        padding: 4px; /* Reduced padding */
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background: #fff;
+        resize: none;
+        transition: 0.3s;
     }
-
     .references-textarea:focus {
-      border-color: #007BFF;
-      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-      outline: none;
+        border-color: #007BFF;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
     }
-
     @media (max-width: 768px) {
-      .references-table {
-        font-size: 12px;
-      }
-
-      .references-textarea {
-        font-size: 12px;
-      }
+        .references-table {
+            font-size: 12px;
+        }
+        .references-textarea {
+            font-size: 12px;
+        }
     }
-
     /* PDF button styling */
     .pdf-btn {
       display: block;
-      margin: 10px auto;
-      /* Reduced margin */
-      padding: 8px 16px;
-      /* Reduced padding */
+      margin: 10px auto; /* Reduced margin */
+      padding: 8px 16px; /* Reduced padding */
       background-color: #007BFF;
       color: white;
       border: none;
@@ -372,22 +308,18 @@ $totalLectures = count($plans);
       font-size: 16px;
       cursor: pointer;
     }
-
     .pdf-btn:hover {
       background-color: #0056b3;
     }
-
     /* Modal Popup Styling */
     .modal {
       position: fixed;
-      top: 10px;
-      /* Adjusted for reduced spacing */
+      top: 10px; /* Adjusted for reduced spacing */
       left: 50%;
       transform: translateX(-50%);
       background-color: #007bff;
       color: white;
-      padding: 8px 16px;
-      /* Reduced padding */
+      padding: 8px 16px; /* Reduced padding */
       border-radius: 5px;
       display: none;
       z-index: 1000;
@@ -405,13 +337,18 @@ $totalLectures = count($plans);
       background-color: #4CAF50;
     }
 
+    .modal.error {
+      background-color: #f44336;
+    }
+    .modal.success {
+      background-color: #4CAF50;
+    }
     .modal.fade-out {
       opacity: 0;
       top: 0;
     }
   </style>
 </head>
-
 <body>
   <h2>Teaching Plans for <?= htmlspecialchars($subject ?: 'Unknown') ?></h2>
 
@@ -423,8 +360,7 @@ $totalLectures = count($plans);
   </div>
 
   <!-- Teaching Plan and References Form -->
-  <form id="teachingplan" method="post"
-    action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?subject=<?= urlencode($subject) ?>&subject_id=<?= $subject_id ?>">
+  <form id="teachingplan" method="post" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?subject=<?= urlencode($subject) ?>&subject_id=<?= $subject_id ?>">
     <table>
       <tr>
         <th>Lecture Number</th>
@@ -440,81 +376,80 @@ $totalLectures = count($plans);
       </tr>
       <?php foreach ($plans as $plan): ?>
         <?php
-        // If the proposed_date is empty, in the exclude dates list, or flagged as NTD, render a grey row without a lecture number.
-        if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
-          $lectureNumberCell = '';
-          $rowClass = 'grey-row';
-          $inputClass = 'grey-input';
-        } else {
-          $lectureNumberCell = $lectureNumber++;
-          $rowClass = '';
-          $inputClass = '';
-        }
+          // If the proposed_date is empty, in the exclude dates list, or flagged as NTD, render a grey row without a lecture number.
+          if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
+              $lectureNumberCell = '';
+              $rowClass = 'grey-row';
+              $inputClass = 'grey-input';
+          } else {
+              $lectureNumberCell = $lectureNumber++;
+              $rowClass = '';
+              $inputClass = '';
+          }
         ?>
         <tr class="<?= $rowClass ?>">
           <td class="empty-lecture"><?= $lectureNumberCell ?></td>
           <td>
-            <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]"
-              value="<?= htmlspecialchars($plan['proposed_date']) ?>">
+            <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]" value="<?= htmlspecialchars($plan['proposed_date']) ?>">
             <?php
-            // Format date from Y-m-d to d-m-Y (if possible)
-            $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
-            echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
+              // Format date from Y-m-d to d-m-Y (if possible)
+              $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
+              echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
             ?>
           </td>
           <td>
-            <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
-              placeholder="Enter content" <?= $editable == 0 ? 'readonly' : '' ?>
+            <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]" placeholder="Enter content" <?= $editable == 0 ? 'readonly' : '' ?>
               oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
           </td>
           <td></td>
           <td>
-            <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
-              placeholder="Enter content not covered" <?= $editable == 0 ? 'readonly' : '' ?>
+            <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]" placeholder="Enter content not covered" <?= $editable == 0 ? 'readonly' : '' ?>
               oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
           </td>
           <td>
             <table>
-              <tr>
-                <th></th>
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                  <th><?= $i ?></th>
-                <?php endfor; ?>
-              </tr>
-              <tr>
-                <td>Textbook</td>
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                  <td>
-                    <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="t<?= $i ?>"
-                      <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>     <?= $editable == 0 ? 'disabled' : '' ?>>
-                    T<?= $i ?>
-                  </td>
-                <?php endfor; ?>
-              </tr>
-              <tr>
-                <td>References</td>
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                  <td>
-                    <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="r<?= $i ?>"
-                      <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>     <?= $editable == 0 ? 'disabled' : '' ?>>
-                    R<?= $i ?>
-                  </td>
-                <?php endfor; ?>
-              </tr>
+                <tr>
+                    <th></th>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <th><?= $i ?></th>
+                    <?php endfor; ?>
+                </tr>
+                <tr>
+                    <td>Textbook</td>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <td>
+                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="t<?= $i ?>"
+                                <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>
+                                <?= $editable == 0 ? 'disabled' : '' ?>>
+                            T<?= $i ?>
+                        </td>
+                    <?php endfor; ?>
+                </tr>
+                <tr>
+                    <td>References</td>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <td>
+                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="r<?= $i ?>"
+                                <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>
+                                <?= $editable == 0 ? 'disabled' : '' ?>>
+                            R<?= $i ?>
+                        </td>
+                    <?php endfor; ?>
+                </tr>
             </table>
           </td>
           <td>
-            <?php
-            $selectedMethods = explode(', ', $plan['methodology'] ?? '');
+            <?php 
+                $selectedMethods = explode(', ', $plan['methodology'] ?? '');
             ?>
             <label>
-              <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Board" <?= in_array('Board', $selectedMethods) ? 'checked' : '' ?>   <?= $editable == 0 ? 'disabled' : '' ?>> Board
+                <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Board" <?= in_array('Board', $selectedMethods) ? 'checked' : '' ?> <?= $editable == 0 ? 'disabled' : '' ?>> Board
             </label><br>
             <label>
-              <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="PPT" <?= in_array('PPT', $selectedMethods) ? 'checked' : '' ?>   <?= $editable == 0 ? 'disabled' : '' ?>> PPT
+                <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="PPT" <?= in_array('PPT', $selectedMethods) ? 'checked' : '' ?> <?= $editable == 0 ? 'disabled' : '' ?>> PPT
             </label><br>
             <label>
-              <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Other" <?= in_array('Other', $selectedMethods) ? 'checked' : '' ?>   <?= $editable == 0 ? 'disabled' : '' ?>> Other
+                <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Other" <?= in_array('Other', $selectedMethods) ? 'checked' : '' ?> <?= $editable == 0 ? 'disabled' : '' ?>> Other
             </label>
           </td>
           <td>
@@ -533,63 +468,45 @@ $totalLectures = count($plans);
         </tr>
       <?php endforeach; ?>
     </table>
-
-
-
-
-
-
+    
     <h2>References</h2>
     <!-- Hidden input to pass the subject ID -->
     <input type="hidden" name="sub_id" value="<?= $subject_id ?>">
     <table class="references-table">
-      <tr>
-        <th>References</th>
-        <th>Textbooks</th>
-      </tr>
-      <tr>
-        <td>
-          <?php
-          $referenceCodes = ['R1', 'R2', 'R3', 'R4', 'R5'];
-          foreach ($referenceCodes as $code): ?>
-            <label class="references-label"><?= $code ?></label>
-            <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
-              placeholder="Enter reference text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
-          <?php endforeach; ?>
-        </td>
-        <td>
-          <?php
-          $textbookCodes = ['T1', 'T2', 'T3', 'T4', 'T5'];
-          foreach ($textbookCodes as $code): ?>
-            <label class="references-label"><?= $code ?></label>
-            <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
-              placeholder="Enter textbook text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
-          <?php endforeach; ?>
-        </td>
-      </tr>
+        <tr>
+            <th>References</th>
+            <th>Textbooks</th>
+        </tr>
+        <tr>
+            <td>
+                <?php 
+                $referenceCodes = ['R1', 'R2', 'R3', 'R4', 'R5'];
+                foreach ($referenceCodes as $code): ?>
+                    <label class="references-label"><?= $code ?></label>
+                    <textarea class="references-textarea" name="subject_references[<?= $code ?>]" 
+                        placeholder="Enter reference text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+                <?php endforeach; ?>
+            </td>
+            <td>
+                <?php 
+                $textbookCodes  = ['T1', 'T2', 'T3', 'T4', 'T5'];
+                foreach ($textbookCodes as $code): ?>
+                    <label class="references-label"><?= $code ?></label>
+                    <textarea class="references-textarea" name="subject_references[<?= $code ?>]" 
+                        placeholder="Enter textbook text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+                <?php endforeach; ?>
+            </td>
+        </tr>
     </table>
-
-
-
-
-
-
+    
     <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
     <button type="button" class="submit-btn" onclick="view_PDF()">View PDF</button>
   </form>
-
-
-
-
-
 
   <!-- Display total lectures -->
   <div class="total-lectures-box">
     Total Lectures: <?= $lectureNumber - 1 ?>
   </div>
-
-
-
 
   <script>
     // Attach a submit event listener to handle AJAX saving
@@ -609,19 +526,17 @@ $totalLectures = count($plans);
         },
         body: formData
       })
-        .then(response => response.json())
-        .then(data => {
-          showModal(data.message, 'success');
-          saveBtn.disabled = false;
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showModal('Error saving data.', 'error');
-          saveBtn.disabled = false;
-        });
+      .then(response => response.json())
+      .then(data => {
+        showModal(data.message, 'success');
+        saveBtn.disabled = false;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showModal('Error saving data.', 'error');
+        saveBtn.disabled = false;
+      });
     }
-
-
 
     // Function to display the modal popup
     function showModal(message, type) {
@@ -642,51 +557,18 @@ $totalLectures = count($plans);
       }, 3000);
     }
 
-
-
     // Function to view PDF (opens in a new tab)
-    function view_PDF() {
+    function view_PDF(){
       var form = document.getElementById('teachingplan');
       var originalAction = form.action;
       var originalTarget = form.target;
-
-      // Create hidden inputs for subject_references, excludeDatesArray, and isNTD
-      var subjectReferencesInput = document.createElement('input');
-      subjectReferencesInput.type = 'hidden';
-      subjectReferencesInput.name = 'subject_references';
-      subjectReferencesInput.value = JSON.stringify(<?= json_encode($references) ?>);
-
-      var excludeDatesArrayInput = document.createElement('input');
-      excludeDatesArrayInput.type = 'hidden';
-      excludeDatesArrayInput.name = 'excludeDatesArray';
-      excludeDatesArrayInput.value = JSON.stringify(<?= json_encode($excludeDatesArray) ?>);
-
-      var isNTDInput = document.createElement('input');
-      isNTDInput.type = 'hidden';
-      isNTDInput.name = 'isNTD';
-      isNTDInput.value = JSON.stringify(<?= json_encode(array_column($plans, 'isNTD', 'pk')) ?>);
-
-      // Append the hidden inputs to the form
-      form.appendChild(subjectReferencesInput);
-      form.appendChild(excludeDatesArrayInput);
-      form.appendChild(isNTDInput);
-
-      // Set form attributes for PDF generation
-      form.target = '_blank'; // Open PDF in a new tab
+      form.target = '_blank';
       form.action = 'view_PDF_borders.php';
       form.method = 'POST';
       form.submit();
-
-      // Restore original form attributes
       form.action = originalAction;
       form.target = originalTarget;
-
-      // Remove the hidden inputs after submission
-      form.removeChild(subjectReferencesInput);
-      form.removeChild(excludeDatesArrayInput);
-      form.removeChild(isNTDInput);
     }
   </script>
 </body>
-
 </html>

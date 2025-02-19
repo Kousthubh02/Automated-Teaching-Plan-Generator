@@ -2,7 +2,7 @@
 // Database connection
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "1402";
 $dbname = "major_testing";
 
 // Create connection
