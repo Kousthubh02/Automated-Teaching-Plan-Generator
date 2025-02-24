@@ -418,7 +418,7 @@ $totalLectures = count($plans);
                     <td>Textbook</td>
                     <?php for ($i = 1; $i <= 5; $i++): ?>
                         <td>
-                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="t<?= $i ?>"
+                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="T<?= $i ?>"
                                 <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>
                                 <?= $editable == 0 ? 'disabled' : '' ?>>
                             T<?= $i ?>
@@ -429,13 +429,27 @@ $totalLectures = count($plans);
                     <td>References</td>
                     <?php for ($i = 1; $i <= 5; $i++): ?>
                         <td>
-                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="r<?= $i ?>"
+                            <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="R<?= $i ?>"
                                 <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>
                                 <?= $editable == 0 ? 'disabled' : '' ?>>
                             R<?= $i ?>
                         </td>
                     <?php endfor; ?>
                 </tr>
+                <!-- Others Row -->
+        <tr>
+            <td>Others</td> <!-- Row label -->
+            <?php for ($i = 1; $i <= 5; $i++): ?>
+                <td>
+                    <input type="checkbox" 
+                           name="plan_references[<?= $plan['pk'] ?>][]" 
+                           value="O<?= $i ?>"
+                           <?= (isset($plan['reference']) && in_array("o$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>
+                           <?= $editable == 0 ? 'disabled' : '' ?>>
+                    O<?= $i ?>
+                </td>
+            <?php endfor; ?>
+        </tr>
             </table>
           </td>
           <td>
@@ -476,6 +490,7 @@ $totalLectures = count($plans);
         <tr>
             <th>References</th>
             <th>Textbooks</th>
+            <th>Others</th>
         </tr>
         <tr>
             <td>
@@ -495,7 +510,16 @@ $totalLectures = count($plans);
                     <textarea class="references-textarea" name="subject_references[<?= $code ?>]" 
                         placeholder="Enter textbook text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
                 <?php endforeach; ?>
-            </td>
+                </td>
+                <td>
+            <?php 
+            $webReferenceCodes = ['O1', 'O2', 'O3', 'O4', 'O5'];
+            foreach ($webReferenceCodes as $code): ?>
+                <label class="references-label"><?= $code ?></label>
+                <textarea class="references-textarea" name="subject_references[<?= $code ?>]" 
+                    placeholder="Enter web reference text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+            <?php endforeach; ?>
+        </td>
         </tr>
     </table>
     

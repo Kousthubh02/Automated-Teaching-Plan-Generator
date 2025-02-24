@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 08, 2025 at 05:31 PM
+-- Generation Time: Feb 24, 2025 at 05:52 PM
 -- Server version: 8.0.32
 -- PHP Version: 8.2.12
 
@@ -51,7 +51,7 @@ INSERT INTO `dept` (`dept_id`, `dept_name`) VALUES
 
 CREATE TABLE `reference_table` (
   `pk` int NOT NULL,
-  `ref_code` text,
+  `ref_code` varchar(10) DEFAULT NULL,
   `sub_id` int DEFAULT NULL,
   `ref_content` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -61,96 +61,21 @@ CREATE TABLE `reference_table` (
 --
 
 INSERT INTO `reference_table` (`pk`, `ref_code`, `sub_id`, `ref_content`) VALUES
-(1, 'R1', 22, ''),
-(2, 'R2', 22, ''),
-(3, 'R3', 22, ''),
-(4, 'R4', 22, 'sadfsadf'),
-(5, 'R5', 22, ''),
-(6, 'T1', 22, ''),
-(7, 'T2', 22, ''),
-(8, 'T3', 22, ''),
-(9, 'T4', 22, 'sdasdf'),
-(10, 'T5', 22, ''),
-(11, 'R1', 22, ''),
-(12, 'R2', 22, ''),
-(13, 'R3', 22, ''),
-(14, 'R4', 22, 'sadfsadf'),
-(15, 'R5', 22, ''),
-(16, 'T1', 22, ''),
-(17, 'T2', 22, ''),
-(18, 'T3', 22, ''),
-(19, 'T4', 22, 'sdasdf'),
-(20, 'T5', 22, ''),
-(21, 'R1', 22, ''),
-(22, 'R2', 22, ''),
-(23, 'R3', 22, ''),
-(24, 'R4', 22, 'sadfsadf'),
-(25, 'R5', 22, ''),
-(26, 'T1', 22, ''),
-(27, 'T2', 22, ''),
-(28, 'T3', 22, ''),
-(29, 'T4', 22, 'sdasdf'),
-(30, 'T5', 22, ''),
-(31, 'R1', 22, ''),
-(32, 'R2', 22, ''),
-(33, 'R3', 22, ''),
-(34, 'R4', 22, 'sadfsadf'),
-(35, 'R5', 22, ''),
-(36, 'T1', 22, ''),
-(37, 'T2', 22, ''),
-(38, 'T3', 22, ''),
-(39, 'T4', 22, 'sdasdf'),
-(40, 'T5', 22, ''),
-(41, 'R1', 22, ''),
-(42, 'R2', 22, ''),
-(43, 'R3', 22, ''),
-(44, 'R4', 22, 'sadfsadf'),
-(45, 'R5', 22, ''),
-(46, 'T1', 22, ''),
-(47, 'T2', 22, ''),
-(48, 'T3', 22, ''),
-(49, 'T4', 22, 'sdasdf'),
-(50, 'T5', 22, ''),
-(51, 'R1', 22, ''),
-(52, 'R2', 22, ''),
-(53, 'R3', 22, ''),
-(54, 'R4', 22, 'sadfsadf'),
-(55, 'R5', 22, ''),
-(56, 'T1', 22, ''),
-(57, 'T2', 22, ''),
-(58, 'T3', 22, ''),
-(59, 'T4', 22, 'sdasdf'),
-(60, 'T5', 22, ''),
-(61, 'R1', 22, ''),
-(62, 'R2', 22, ''),
-(63, 'R3', 22, ''),
-(64, 'R4', 22, 'sadfsadf'),
-(65, 'R5', 22, ''),
-(66, 'T1', 22, ''),
-(67, 'T2', 22, ''),
-(68, 'T3', 22, ''),
-(69, 'T4', 22, 'sdasdf'),
-(70, 'T5', 22, ''),
-(71, 'R1', 22, ''),
-(72, 'R2', 22, ''),
-(73, 'R3', 22, ''),
-(74, 'R4', 22, 'sadfsadf'),
-(75, 'R5', 22, ''),
-(76, 'T1', 22, ''),
-(77, 'T2', 22, ''),
-(78, 'T3', 22, ''),
-(79, 'T4', 22, 'sdasdf'),
-(80, 'T5', 22, ''),
-(81, 'R1', 22, ''),
-(82, 'R2', 22, ''),
-(83, 'R3', 22, ''),
-(84, 'R4', 22, ''),
-(85, 'R5', 22, ''),
-(86, 'T1', 22, ''),
-(87, 'T2', 22, ''),
-(88, 'T3', 22, ''),
-(89, 'T4', 22, ''),
-(90, 'T5', 22, '');
+(81, 'R1', 22, 'ab'),
+(82, 'R2', 22, 'cfsdfasdfasdfsd'),
+(83, 'R3', 22, 'fasfsda'),
+(84, 'R4', 22, 'sfsdfsdfsfsddsfsdf'),
+(85, 'R5', 22, 'sd'),
+(86, 'T1', 22, 'bsdfas'),
+(87, 'T2', 22, 'dfsdfsdafasdfsdf'),
+(88, 'T3', 22, 'fs'),
+(89, 'T4', 22, 'sfsdfsd'),
+(90, 'T5', 22, 'sdfsdf'),
+(211, 'O1', 22, 'www.deepseek.com'),
+(212, 'O2', 22, 'www.chatgpt.com'),
+(213, 'O3', 22, ''),
+(214, 'O4', 22, ''),
+(215, 'O5', 22, '');
 
 -- --------------------------------------------------------
 
@@ -260,7 +185,8 @@ INSERT INTO `subject_table` (`sub_id`, `sub`, `sem_id`) VALUES
 (24, 'NLP', 8),
 (25, 'DC', 8),
 (26, 'ADS', 8),
-(27, 'SMA', 8);
+(27, 'SMA', 8),
+(28, 'ADS', 8);
 
 -- --------------------------------------------------------
 
@@ -314,7 +240,7 @@ CREATE TABLE `teaching_plan` (
 --
 
 INSERT INTO `teaching_plan` (`pk`, `dept_id`, `staff_id`, `current_year`, `sem_id`, `division`, `subject`, `proposed_date`, `isNTD`, `content`, `actual_date`, `content_not_covered`, `reference`, `methodology`, `co_mapping`, `remarks`, `Verified_by_hod`) VALUES
-(48, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-07-15', 0, 'htftf', NULL, 'yfy', '', 'Board', 'CO1', NULL, NULL),
+(48, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-07-15', 0, 'htftf', NULL, 'y', 'T1, T2, T3, T5, R3, R4, O4, O5', 'Board', 'CO1', NULL, NULL),
 (49, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-07-16', 0, '', NULL, '', '', 'Board, PPT', 'CO2', NULL, NULL),
 (50, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-07-16', 0, '', NULL, '', '', '', '', NULL, NULL),
 (51, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-07-18', 0, '', NULL, '', '', '', '', NULL, NULL),
@@ -353,7 +279,7 @@ INSERT INTO `teaching_plan` (`pk`, `dept_id`, `staff_id`, `current_year`, `sem_i
 (84, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-01', 0, '', NULL, '', '', '', '', NULL, NULL),
 (85, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-03', 0, '', NULL, '', '', '', '', NULL, NULL),
 (86, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-07', 0, '', NULL, '', '', '', '', NULL, NULL),
-(87, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-08', 0, '', NULL, '', '', '', '', NULL, NULL),
+(87, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-08', 0, '', NULL, '', 'T1, R1, R2', '', '', NULL, NULL),
 (88, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-10', 0, '', NULL, '', '', '', '', NULL, NULL),
 (89, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-14', 0, '', NULL, '', '', '', '', NULL, NULL),
 (90, NULL, NULL, NULL, NULL, NULL, 'ML', '2024-10-15', 0, '', NULL, '', '', '', '', NULL, NULL),
@@ -407,7 +333,7 @@ ALTER TABLE `dept`
 --
 ALTER TABLE `reference_table`
   ADD PRIMARY KEY (`pk`),
-  ADD KEY `sub_id` (`sub_id`);
+  ADD UNIQUE KEY `unique_subid_refcode` (`sub_id`,`ref_code`);
 
 --
 -- Indexes for table `sem`
@@ -457,7 +383,7 @@ ALTER TABLE `teaching_plan`
 -- AUTO_INCREMENT for table `reference_table`
 --
 ALTER TABLE `reference_table`
-  MODIFY `pk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
+  MODIFY `pk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=396;
 
 --
 -- AUTO_INCREMENT for table `settings`
@@ -469,7 +395,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `subject_table`
 --
 ALTER TABLE `subject_table`
-  MODIFY `sub_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `sub_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `teaching_dates`
