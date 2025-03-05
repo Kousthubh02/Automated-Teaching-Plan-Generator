@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 24, 2025 at 05:52 PM
+-- Generation Time: Mar 05, 2025 at 07:11 AM
 -- Server version: 8.0.32
 -- PHP Version: 8.2.12
 
@@ -65,17 +65,17 @@ INSERT INTO `reference_table` (`pk`, `ref_code`, `sub_id`, `ref_content`) VALUES
 (82, 'R2', 22, 'cfsdfasdfasdfsd'),
 (83, 'R3', 22, 'fasfsda'),
 (84, 'R4', 22, 'sfsdfsdfsfsddsfsdf'),
-(85, 'R5', 22, 'sd'),
+(85, 'R5', 22, 'sdsdafasdfasdfsadf'),
 (86, 'T1', 22, 'bsdfas'),
 (87, 'T2', 22, 'dfsdfsdafasdfsdf'),
-(88, 'T3', 22, 'fs'),
-(89, 'T4', 22, 'sfsdfsd'),
+(88, 'T3', 22, 'fsaasdfasdf'),
+(89, 'T4', 22, 'sfsdfsdasdfasdfsadfasdf'),
 (90, 'T5', 22, 'sdfsdf'),
 (211, 'O1', 22, 'www.deepseek.com'),
-(212, 'O2', 22, 'www.chatgpt.com'),
-(213, 'O3', 22, ''),
-(214, 'O4', 22, ''),
-(215, 'O5', 22, '');
+(212, 'O2', 22, 'www.chatgpt.casfasdfasdfom'),
+(213, 'O3', 22, 'asdfasdfasdfs'),
+(214, 'O4', 22, 'sadfasdfasdfas'),
+(215, 'O5', 22, 'asdfasdfasdfsadf');
 
 -- --------------------------------------------------------
 
@@ -185,8 +185,7 @@ INSERT INTO `subject_table` (`sub_id`, `sub`, `sem_id`) VALUES
 (24, 'NLP', 8),
 (25, 'DC', 8),
 (26, 'ADS', 8),
-(27, 'SMA', 8),
-(28, 'ADS', 8);
+(27, 'SMA', 8);
 
 -- --------------------------------------------------------
 
@@ -383,7 +382,7 @@ ALTER TABLE `teaching_plan`
 -- AUTO_INCREMENT for table `reference_table`
 --
 ALTER TABLE `reference_table`
-  MODIFY `pk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=396;
+  MODIFY `pk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=456;
 
 --
 -- AUTO_INCREMENT for table `settings`
