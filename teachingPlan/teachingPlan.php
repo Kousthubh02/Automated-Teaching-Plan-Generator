@@ -174,6 +174,24 @@ if (isset($_GET['semester'])) {
             table {
                 width: 100%;
             }
+
+
+            .division-options {
+            margin: 15px auto;
+            text-align: center;
+        }
+        .division-btn {
+            padding: 8px 20px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #6c757d;
+            color: white;
+        }
+        .division-btn.active {
+            background-color: #4CAF50;
+        }
         }
     </style>
 </head>
@@ -243,6 +261,13 @@ if (isset($_GET['semester'])) {
 
             <!-- Hidden field to hold subject name -->
             <input type="hidden" name="subject" id="subject">
+
+            <label for="division">Division</label>
+            <select name="division" id="division" required>
+                <option value="NONE" selected>No division</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+            </select>
 
             <button type="submit">View Teaching Plans</button>
         </form>

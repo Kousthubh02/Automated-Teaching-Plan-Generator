@@ -37,12 +37,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $subject_name = '';
     }
 
+    $division = isset($_POST['division']) ? trim($_POST['division']) : '';
+
     // Retrieve dynamic week details arrays and re-index them
     $first_week_details   = isset($_POST['first_week_details']) ? array_values($_POST['first_week_details']) : [];
     $regular_week_details = isset($_POST['regular_week_details']) ? array_values($_POST['regular_week_details']) : [];
 
     if (empty($subject_name)) {
         echo "<p class='error-message'>Subject is required.</p>";
+        exit();
+    }
+
+    if (empty($division)) {
+        echo "<p class='error-message'>Division is required.</p>";
         exit();
     }
 
@@ -85,8 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $firstWeekEnd->modify('+6 days');
 
     // Prepare the insert statement
-    $stmt_insert = $pdo->prepare("INSERT INTO teaching_plan (subject, proposed_date, content, isNTD) VALUES (:subject, :date, :content, :isNTD)");
-
+    $stmt_insert = $pdo->prepare("INSERT INTO teaching_plan (subject, division, proposed_date, content, isNTD) VALUES (:subject, :division, :date, :content, :isNTD)");
     // Loop through each date in the teaching period
     foreach ($all_dates as $date) {
         $currentDateObj = DateTime::createFromFormat('Y-m-d', $date);
@@ -103,6 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $details = $regular_week_details;
         }
 
+
         // Loop through the details array and if the day matches, insert the lecture records
         foreach ($details as $detail) {
             if (isset($detail['day'], $detail['lectures']) && $detail['day'] === $current_day) {
@@ -112,6 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         ':subject' => $subject_name,
                         ':date'    => $date,
                         ':content' => $content,
+                        ':division' => $division,
                         ':isNTD'   => $isNTD
                     ]);
                 }
@@ -174,6 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             0% { opacity: 0; }
             100% { opacity: 1; }
         }
+            
     </style>
 </head>
 <body>

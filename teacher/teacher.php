@@ -193,8 +193,20 @@ if (isset($_GET['semester'])) {
             <option value="">Select a subject</option>
         </select>
 
+
+
+
         <!-- Hidden field to store the subject name -->
         <input type="hidden" name="subject" id="subject">
+
+        <!-- for division -->
+        <label for="division">Division</label>
+<select name="division" id="division" required>
+    <option value="" selected>Select Division</option>
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="NONE">NONE</option>
+</select>
 
         <!-- First Week Details -->
         <div class="dynamic-days">
