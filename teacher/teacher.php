@@ -176,8 +176,8 @@ if (isset($_GET['semester'])) {
         </script>
 
         <!-- Semester Dropdown -->
-        <label for="current_sem">Current Semester</label>
-        <select name="current_sem" id="current_sem" required>
+        <label for="sem_id">Current Semester</label>
+        <select name="sem_id" id="current_sem" required>
             <option value="" disabled selected>Select Semester</option>
             <option value="3">3</option>
             <option value="4">4</option>
