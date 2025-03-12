@@ -432,6 +432,7 @@ $totalLectures = count($plans);
   <!-- Teaching Plan and References Form -->
   <form id="teachingplan" method="post"
     action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?subject=<?= urlencode($subject) ?>&subject_id=<?= $subject_id ?>&division=<?= urlencode($division) ?>" >
+  
     <table>
       <tr>
         <th>Lecture Number</th>
