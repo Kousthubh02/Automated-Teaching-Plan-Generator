@@ -442,115 +442,133 @@ $totalLectures = count($plans);
         <th>Reference</th>
         <th>Methodology</th>
         <th>CO Mapping</th>
-        <th>Remarks</th>
+        <th>Remarks with Signature</th>
         <th>Verified by HOD</th>
       </tr>
-      <?php foreach ($plans as $plan): ?>
-        <?php
-        // If the proposed_date is empty, in the exclude dates list, or flagged as NTD, render a grey row without a lecture number.
-        if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
-          $lectureNumberCell = '';
-          $rowClass = 'grey-row';
-          $inputClass = 'grey-input';
-        } else {
-          $lectureNumberCell = $lectureNumber++;
-          $rowClass = '';
-          $inputClass = '';
-        }
-        ?>
-        <tr class="<?= $rowClass ?>">
-          <td class="empty-lecture"><?= $lectureNumberCell ?></td>
-          <td>
-            <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]"
-              value="<?= htmlspecialchars($plan['proposed_date']) ?>">
-            <?php
-            // Format date from Y-m-d to d-m-Y (if possible)
-            $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
-            echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
-            ?>
-          </td>
-          <td>
-            <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
-              placeholder="Enter content" <?= $editable == 0 ? 'readonly' : '' ?>
-              oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
-          </td>
-          <td></td>
-          <td>
-            <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
-              placeholder="Enter content not covered" <?= $editable == 0 ? 'readonly' : '' ?>
-              oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
-          </td>
-          <td>
-            <table>
-              <tr>
-                <th></th>
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                  <th><?= $i ?></th>
-                <?php endfor; ?>
-              </tr>
-              <tr>
-                <td>Textbook</td>
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                  <td>
-                    <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="T<?= $i ?>"
-                      <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>     <?= $editable == 0 ? 'disabled' : '' ?>>
-                    T<?= $i ?>
-                  </td>
-                <?php endfor; ?>
-              </tr>
-              <tr>
-                <td>References</td>
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                  <td>
-                    <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="R<?= $i ?>"
-                      <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>     <?= $editable == 0 ? 'disabled' : '' ?>>
-                    R<?= $i ?>
-                  </td>
-                <?php endfor; ?>
-              </tr>
-              <!-- Others Row -->
-              <tr>
-                <td>Others</td> <!-- Row label -->
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                  <td>
-                    <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="O<?= $i ?>"
-                      <?= (isset($plan['reference']) && in_array("o$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?>     <?= $editable == 0 ? 'disabled' : '' ?>>
-                    O<?= $i ?>
-                  </td>
-                <?php endfor; ?>
-              </tr>
-            </table>
-          </td>
-          <td>
-            <?php
-            $selectedMethods = explode(', ', $plan['methodology'] ?? '');
-            ?>
-            <label>
-              <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Board" <?= in_array('Board', $selectedMethods) ? 'checked' : '' ?>   <?= $editable == 0 ? 'disabled' : '' ?>> Board
-            </label><br>
-            <label>
-              <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="PPT" <?= in_array('PPT', $selectedMethods) ? 'checked' : '' ?>   <?= $editable == 0 ? 'disabled' : '' ?>> PPT
-            </label><br>
-            <label>
-              <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Other" <?= in_array('Other', $selectedMethods) ? 'checked' : '' ?>   <?= $editable == 0 ? 'disabled' : '' ?>> Other
-            </label>
-          </td>
-          <td>
-            <select class="editable-input <?= $inputClass ?>" name="co_mapping[<?= $plan['pk'] ?>]" <?= $editable == 0 ? 'disabled' : '' ?>>
-              <option value="">Select CO</option>
-              <option value="CO1" <?= $plan['co_mapping'] == 'CO1' ? 'selected' : '' ?>>CO1</option>
-              <option value="CO2" <?= $plan['co_mapping'] == 'CO2' ? 'selected' : '' ?>>CO2</option>
-              <option value="CO3" <?= $plan['co_mapping'] == 'CO3' ? 'selected' : '' ?>>CO3</option>
-              <option value="CO4" <?= $plan['co_mapping'] == 'CO4' ? 'selected' : '' ?>>CO4</option>
-              <option value="CO5" <?= $plan['co_mapping'] == 'CO5' ? 'selected' : '' ?>>CO5</option>
-              <option value="CO6" <?= $plan['co_mapping'] == 'CO6' ? 'selected' : '' ?>>CO6</option>
-            </select>
-          </td>
-          <td></td>
-          <td></td>
+
+
+   <?php foreach ($plans as $plan): ?>
+  <?php
+  // If the proposed_date is empty, in the exclude dates list, or flagged as NTD, render a grey row without a lecture number.
+  if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
+    $lectureNumberCell = '';
+    $rowClass = 'grey-row';
+    $inputClass = 'grey-input';
+  } else {
+    $lectureNumberCell = $lectureNumber++;
+    $rowClass = '';
+    $inputClass = '';
+  }
+  // Determine if fields should be editable based on both $editable and isNTD
+  $isEditable = ($editable == 1 && $plan['isNTD'] != 1);
+  ?>
+  <tr class="<?= $rowClass ?>">
+    <td class="empty-lecture"><?= $lectureNumberCell ?></td>
+    <td>
+      <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]"
+        value="<?= htmlspecialchars($plan['proposed_date']) ?>">
+      <?php
+      // Format date from Y-m-d to d-m-Y (if possible)
+      $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
+      echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
+      ?>
+    </td>
+    <td>
+      <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
+        placeholder="Enter content" <?= $isEditable ? '' : 'readonly' ?>
+        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
+    </td>
+    <td></td>
+    <td>
+      <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
+        placeholder="Enter content not covered" <?= $isEditable ? '' : 'readonly' ?>
+        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
+    </td>
+    <td>
+      <table>
+        <tr>
+          <th></th>
+          <?php for ($i = 1; $i <= 5; $i++): ?>
+            <th><?= $i ?></th>
+          <?php endfor; ?>
         </tr>
-      <?php endforeach; ?>
+        <tr>
+          <td>Textbook</td>
+          <?php for ($i = 1; $i <= 5; $i++): ?>
+            <td>
+              <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="T<?= $i ?>"
+                <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
+                <?= $isEditable ? '' : 'disabled' ?>>
+              T<?= $i ?>
+            </td>
+          <?php endfor; ?>
+        </tr>
+        <tr>
+          <td>References</td>
+          <?php for ($i = 1; $i <= 5; $i++): ?>
+            <td>
+              <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="R<?= $i ?>"
+                <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
+                <?= $isEditable ? '' : 'disabled' ?>>
+              R<?= $i ?>
+            </td>
+          <?php endfor; ?>
+        </tr>
+        <tr>
+          <td>Others</td>
+          <?php for ($i = 1; $i <= 5; $i++): ?>
+            <td>
+              <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="O<?= $i ?>"
+                <?= (isset($plan['reference']) && in_array("o$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
+                <?= $isEditable ? '' : 'disabled' ?>>
+              O<?= $i ?>
+            </td>
+          <?php endfor; ?>
+        </tr>
+      </table>
+    </td>
+    <td>
+      <?php
+      $selectedMethods = explode(', ', $plan['methodology'] ?? '');
+      ?>
+      <label>
+        <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Board" 
+          <?= in_array('Board', $selectedMethods) ? 'checked' : '' ?> 
+          <?= $isEditable ? '' : 'disabled' ?>> Board
+      </label><br>
+      <label>
+        <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="PPT" 
+          <?= in_array('PPT', $selectedMethods) ? 'checked' : '' ?> 
+          <?= $isEditable ? '' : 'disabled' ?>> PPT
+      </label><br>
+      <label>
+        <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Other" 
+          <?= in_array('Other', $selectedMethods) ? 'checked' : '' ?> 
+          <?= $isEditable ? '' : 'disabled' ?>> Other
+      </label>
+    </td>
+    <td>
+      <select class="editable-input <?= $inputClass ?>" name="co_mapping[<?= $plan['pk'] ?>]" 
+        <?= $isEditable ? '' : 'disabled' ?>>
+        <option value="">Select CO</option>
+        <option value="CO1" <?= $plan['co_mapping'] == 'CO1' ? 'selected' : '' ?>>CO1</option>
+        <option value="CO2" <?= $plan['co_mapping'] == 'CO2' ? 'selected' : '' ?>>CO2</option>
+        <option value="CO3" <?= $plan['co_mapping'] == 'CO3' ? 'selected' : '' ?>>CO3</option>
+        <option value="CO4" <?= $plan['co_mapping'] == 'CO4' ? 'selected' : '' ?>>CO4</option>
+        <option value="CO5" <?= $plan['co_mapping'] == 'CO5' ? 'selected' : '' ?>>CO5</option>
+        <option value="CO6" <?= $plan['co_mapping'] == 'CO6' ? 'selected' : '' ?>>CO6</option>
+      </select>
+    </td>
+    <td></td>
+    <td></td>
+  </tr>
+<?php endforeach; ?>
+
+
     </table>
+
+
+
 
     <h2>References</h2>
     <!-- Hidden input to pass the subject ID -->
@@ -588,6 +606,8 @@ $totalLectures = count($plans);
             <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
               placeholder="Enter web reference text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
+
+
         </td>
       </tr>
     </table>
@@ -595,6 +615,7 @@ $totalLectures = count($plans);
     <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
     <button type="button" class="submit-btn" onclick="view_PDF()">View PDF</button>
   </form>
+
 
   <!-- Display total lectures -->
   <div class="total-lectures-box">
@@ -665,6 +686,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+document.querySelectorAll('textarea').forEach(textarea => {
+    textarea.addEventListener('click', function() {
+        this.selectionStart = 0;
+        this.selectionEnd = 0;
+    });
+});
+
 // Function to view PDF (opens in a new tab)
 function view_PDF() {
   var form = document.getElementById('teachingplan');
@@ -707,6 +735,7 @@ function view_PDF() {
   form.removeChild(excludeDatesArrayInput);
   form.removeChild(isNTDInput);
   }
+
   </script>
 </body>
 
