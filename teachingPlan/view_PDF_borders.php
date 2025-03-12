@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <th style="width: 10%; border: 1px solid #000;">Reference</th>
                     <th style="width: 10%; border: 1px solid #000;">Methodology</th>
                     <th style="width: 8%; border: 1px solid #000;">CO Mapping</th>
-                    <th style="width: 6%; border: 1px solid #000;">Remarks</th>
+                    <th style="width: 6%; border: 1px solid #000;">Remarks with Signature</th>
                     <th style="width: 6%; border: 1px solid #000;">Verified by HOD</th>
                 </tr>
                 </thead>
