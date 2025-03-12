@@ -286,7 +286,7 @@ $totalLectures = count($plans);
                 <th>Reference</th>
                 <th>Methodology</th>
                 <th>CO Mapping</th>
-                <th>Remarks</th>
+                <th>Remarks with Signature</th>
                 <th>Verified by HOD</th>
             </tr>
             <?php foreach ($plans as $plan): ?>
