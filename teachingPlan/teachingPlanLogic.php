@@ -644,13 +644,43 @@ function view_PDF() {
   var form = document.getElementById('teachingplan');
   var originalAction = form.action;
   var originalTarget = form.target;
-  form.target = '_blank';
+
+  // Create hidden inputs for subject_references, excludeDatesArray, and isNTD
+  var subjectReferencesInput = document.createElement('input');
+  subjectReferencesInput.type = 'hidden';
+  subjectReferencesInput.name = 'subject_references';
+  subjectReferencesInput.value = JSON.stringify(<?= json_encode($references) ?>);
+
+  var excludeDatesArrayInput = document.createElement('input');
+  excludeDatesArrayInput.type = 'hidden';
+  excludeDatesArrayInput.name = 'excludeDatesArray';
+  excludeDatesArrayInput.value = JSON.stringify(<?= json_encode($excludeDatesArray) ?>);
+
+  var isNTDInput = document.createElement('input');
+  isNTDInput.type = 'hidden';
+  isNTDInput.name = 'isNTD';
+  isNTDInput.value = JSON.stringify(<?= json_encode(array_column($plans, 'isNTD', 'pk')) ?>);
+
+  // Append the hidden inputs to the form
+  form.appendChild(subjectReferencesInput);
+  form.appendChild(excludeDatesArrayInput);
+  form.appendChild(isNTDInput);
+
+  // Set form attributes for PDF generation
+  form.target = '_blank'; // Open PDF in a new tab
   form.action = 'view_PDF_borders.php';
   form.method = 'POST';
   form.submit();
+
+  // Restore original form attributes
   form.action = originalAction;
   form.target = originalTarget;
-}
+
+  // Remove the hidden inputs after submission
+  form.removeChild(subjectReferencesInput);
+  form.removeChild(excludeDatesArrayInput);
+  form.removeChild(isNTDInput);
+  }
   </script>
 </body>
 
