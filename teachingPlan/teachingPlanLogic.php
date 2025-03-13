@@ -5,6 +5,7 @@ require '../database/db_connection.php';
 // Get subject and subject_id from GET parameters
 $subject = isset($_GET['subject']) ? htmlspecialchars($_GET['subject']) : 'Unknown';
 $subject_id = filter_input(INPUT_GET, 'subject_id', FILTER_VALIDATE_INT);
+
 $division = isset($_GET['division']) ? strtoupper($_GET['division']) : 'NONE';
 $valid_divisions = ['A', 'B', 'NONE'];
 if (!in_array($division, $valid_divisions)) {
@@ -81,20 +82,31 @@ if ($subject !== 'Unknown') {
 
 
 
-
 // Handle form submission (Save data) via AJAX or normal POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
 
   // --- 1. Process Teaching Plan Update ---
   if (isset($_POST['content'])) {
     try {
       foreach ($_POST['content'] as $pk => $content) {
-        $content_not_covered = $_POST['content_not_covered'][$pk];
-        // Use "plan_references" for the checkboxes to avoid conflicting with subject references
-        $plan_reference = isset($_POST['plan_references'][$pk]) ? implode(', ', $_POST['plan_references'][$pk]) : '';
-        $methodology = isset($_POST['methodology'][$pk]) ? implode(', ', $_POST['methodology'][$pk]) : '';
-        $co_mapping = $_POST['co_mapping'][$pk];
+        // Convert empty values to null
+        $content = trim($content);
+        $content = ($content === '') ? null : $content;
+
+        $content_not_covered = trim($_POST['content_not_covered'][$pk] ?? '');
+        $content_not_covered = ($content_not_covered === '') ? null : $content_not_covered;
+
+        // For plan_references, only set a value if at least one checkbox was checked
+        $plan_reference = isset($_POST['plan_references'][$pk])
+                          ? implode(', ', array_filter($_POST['plan_references'][$pk]))
+                          : null;
+        // For methodology, only set if a value exists
+        $methodology = isset($_POST['methodology'][$pk])
+                       ? implode(', ', array_filter($_POST['methodology'][$pk]))
+                       : null;
+
+        $co_mapping = trim($_POST['co_mapping'][$pk] ?? '');
+        $co_mapping = ($co_mapping === '') ? null : $co_mapping;
 
         // Update each teaching plan record
         $sql = "UPDATE teaching_plan SET 
@@ -106,12 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         WHERE pk = :pk";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-          'content' => $content,
+          'content'             => $content,
           'content_not_covered' => $content_not_covered,
-          'reference' => $plan_reference,
-          'methodology' => $methodology,
-          'co_mapping' => $co_mapping,
-          'pk' => $pk
+          'reference'           => $plan_reference,
+          'methodology'         => $methodology,
+          'co_mapping'          => $co_mapping,
+          'pk'                  => $pk
         ]);
       }
       $message = 'Teaching plan data has been successfully saved.';
@@ -120,43 +132,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
   }
 
-  // --- 2. Process Subject References Update ---
-  if (isset($_POST['subject_references'])) {
-    if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
+
+
+
+// --- 2. Process Subject References Update ---
+if (isset($_POST['subject_references'])) {
+  if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
       die("Invalid subject ID");
-    }
-    $sub_id_post = filter_input(INPUT_POST, 'sub_id', FILTER_VALIDATE_INT);
-    try {
-      // Prepare the SQL statement for inserting/updating references
-      $sql = "INSERT INTO reference_table (sub_id, division, ref_code, ref_content)
-      VALUES (:sub_id, :division, :ref_code, :ref_content)
-      ON DUPLICATE KEY UPDATE ref_content = :ref_content";
-      $stmt = $pdo->prepare($sql);
+  }
+  $sub_id_post = filter_input(INPUT_POST, 'sub_id', FILTER_VALIDATE_INT);
+  try {
       // Loop over each reference submitted (this includes both references and textbooks)
       foreach ($_POST['subject_references'] as $ref_code => $ref_content) {
-        $stmt->execute([
-          ':sub_id' => $sub_id_post,
-          ':ref_code' => $ref_code,
-          ':ref_content' => trim($ref_content),
-          ':division' => $division
-        ]);
+          $ref_content = trim($ref_content);
+          $ref_content = ($ref_content === '') ? null : $ref_content;
+
+          // Check if a row already exists for this sub_id, division, and ref_code
+          $checkSql = "SELECT COUNT(*) FROM reference_table 
+                       WHERE sub_id = :sub_id 
+                       AND division = :division 
+                       AND ref_code = :ref_code";
+          $checkStmt = $pdo->prepare($checkSql);
+          $checkStmt->execute([
+              ':sub_id'   => $sub_id_post,
+              ':division' => $division,
+              ':ref_code' => $ref_code
+          ]);
+          $rowCount = $checkStmt->fetchColumn();
+
+          // If no row exists, insert the data
+          if ($rowCount == 0) {
+              $insertSql = "INSERT INTO reference_table (sub_id, division, ref_code, ref_content)
+                             VALUES (:sub_id, :division, :ref_code, :ref_content)";
+              $insertStmt = $pdo->prepare($insertSql);
+              $insertStmt->execute([
+                  ':sub_id'     => $sub_id_post,
+                  ':division'   => $division,
+                  ':ref_code'   => $ref_code,
+                  ':ref_content'=> $ref_content
+              ]);
+          }
       }
       $message .= ' References updated successfully.';
-    } catch (PDOException $e) {
+  } catch (PDOException $e) {
       $message .= ' Error updating references: ' . $e->getMessage();
-    }
   }
-
+}
   // Return response based on the request type (AJAX or normal)
   if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
     header('Content-Type: application/json');
     echo json_encode(['message' => $message]);
     exit();
-} else {
+  } else {
     header("Location: " . $_SERVER['PHP_SELF'] . "?subject=" . urlencode($subject) . "&subject_id=" . $subject_id . "&division=" . urlencode($division));
     exit();
+  }
 }
-}
+
+
 
 // Fetch existing subject references so that the form can be pre-filled
 try {
@@ -565,7 +598,6 @@ $totalLectures = count($plans);
   </tr>
 <?php endforeach; ?>
 
-
     </table>
 
 
@@ -674,6 +706,8 @@ function showModal(message, type) {
   }, 3000);
 }
 
+
+
 // On page load, display the popup
 document.addEventListener('DOMContentLoaded', () => {
   // Check if there's a save message from a previous save
@@ -693,6 +727,8 @@ document.querySelectorAll('textarea').forEach(textarea => {
         this.selectionEnd = 0;
     });
 });
+
+
 
 // Function to view PDF (opens in a new tab)
 function view_PDF() {
