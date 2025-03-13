@@ -150,24 +150,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $coMapping    = htmlspecialchars($coMappings[$pk] ?? '');
         $remarks      = '';
         $verified     = '';
-
-        // Determine if this row should have a lecture number
-        $isNTDFlag = $isNTD[$pk] ?? 0; // Fetch isNTD from POST data
-        $shouldExclude = $isNTDFlag == 1; // Exclude rows where isNTD is 1
-
+    
+        // Fetch isNTD from POST data
+        $isNTDFlag = $isNTD[$pk] ?? 0; 
+        $shouldExclude = $isNTDFlag == 1;
+    
+        // Start the row
         $html .= '<tr style="page-break-inside: avoid;">';
-        $html .= '<td style="width: 5%; text-align:center; border: 1px solid #000;">' . ($shouldExclude ? '' : $lectureNumber++) . '</td>';
-        $html .= '<td style="width: 10%; border: 1px solid #000;">' . $proposedDate . '</td>';
-        $html .= '<td style="width: 25%; border: 1px solid #000;">' . $contentSafe . '</td>';
-        $html .= '<td style="width: 10%; border: 1px solid #000;">' . $actualDate . '</td>';
-        $html .= '<td style="width: 10%; border: 1px solid #000;">' . $notCovered . '</td>';
-        $html .= '<td style="width: 10%; border: 1px solid #000;">' . $reference . '</td>';
-        $html .= '<td style="width: 10%; border: 1px solid #000;">' . $methodology . '</td>';
-        $html .= '<td style="width: 8%; border: 1px solid #000;">' . $coMapping . '</td>';
-        $html .= '<td style="width: 6%; border: 1px solid #000;">' . $remarks . '</td>';
-        $html .= '<td style="width: 6%; border: 1px solid #000;">' . $verified . '</td>';
+    
+        if ($shouldExclude) {
+            // Merge all columns into one
+            $html .= '<td colspan="10" style="width: 100%; text-align:center; border: 1px solid #000; font-weight: bold;">' . $contentSafe . '</td>';
+        } else {
+            // Normal row structure
+            $html .= '<td style="width: 5%; text-align:center; border: 1px solid #000;">' . $lectureNumber++ . '</td>';
+            $html .= '<td style="width: 10%; border: 1px solid #000;">' . $proposedDate . '</td>';
+            $html .= '<td style="width: 25%; border: 1px solid #000;">' . $contentSafe . '</td>';
+            $html .= '<td style="width: 10%; border: 1px solid #000;">' . $actualDate . '</td>';
+            $html .= '<td style="width: 10%; border: 1px solid #000;">' . $notCovered . '</td>';
+            $html .= '<td style="width: 10%; border: 1px solid #000;">' . $reference . '</td>';
+            $html .= '<td style="width: 10%; border: 1px solid #000;">' . $methodology . '</td>';
+            $html .= '<td style="width: 8%; border: 1px solid #000;">' . $coMapping . '</td>';
+            $html .= '<td style="width: 6%; border: 1px solid #000;">' . $remarks . '</td>';
+            $html .= '<td style="width: 6%; border: 1px solid #000;">' . $verified . '</td>';
+        }
+    
+        // End the row
         $html .= '</tr>';
     }
+    
 
     $html .= '</table>';
 
@@ -253,6 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <b>The percentage Adherence = 1 - </b> 
     <span style="text-decoration:underline;">Number of lectures in which the content is not covered as per the plan</span> <br>
     <span>Total number of lectures</span>
+    <br><br>
     </p>';
     
     // Write the formula to the PDF
@@ -261,7 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Add a blank space for handwritten percentage
     $pdf->Ln(5);
     $pdf->SetFont('times', 'B', 12);
-    $pdf->Cell(0, 10, 'The percentage Adherence =  ________ %', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'The percentage Adherence =  ________________ %', 0, 1, 'C');
 
     $pdf->Ln(25); // Add space for signatures
 
