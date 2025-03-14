@@ -92,7 +92,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ");
 
 
-     foreach ($all_dates as $date) {
+// insert teaching plan data
+foreach ($all_dates as $date) {
     $currentDateObj = DateTime::createFromFormat('Y-m-d', $date);
     $current_day = $currentDateObj->format('l');
     
@@ -109,13 +110,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($excl_sem === 'ALL' || in_array($sem_id, explode(',', $excl_sem))) {
             $isNTD = 1;
             $content = $excl_data['reason'];
+            
+            // Insert a single entry for non-teaching days
+            $stmt_insert->execute([
+                ':subject' => $subject_name,
+                ':division' => $division,
+                ':sem_id' => $sem_id,
+                ':date' => $date,
+                ':content' => $content,
+                ':isNTD' => $isNTD
+            ]);
+            
+            // Skip the rest of the loop for this date
+            continue;
         }
     }
 
     // Determine which week details to use
     $details = ($currentDateObj <= $firstWeekEnd) ? $first_week_details : $regular_week_details;
 
-    // Insert lectures
+    // Insert lectures for teaching days
     foreach ($details as $detail) {
         if (isset($detail['day'], $detail['lectures']) && $detail['day'] === $current_day) {
             for ($i = 0; $i < (int)$detail['lectures']; $i++) {
@@ -131,7 +145,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
-        
+
         $pdo->commit();
     } catch (PDOException $e) {
         $pdo->rollBack();
