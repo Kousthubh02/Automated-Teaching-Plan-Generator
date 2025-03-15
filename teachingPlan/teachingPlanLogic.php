@@ -721,13 +721,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-document.querySelectorAll('textarea').forEach(textarea => {
-    textarea.addEventListener('click', function() {
-        this.selectionStart = 0;
-        this.selectionEnd = 0;
-    });
-});
-
 
 
 // Function to view PDF (opens in a new tab)
