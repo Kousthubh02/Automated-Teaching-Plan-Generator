@@ -159,10 +159,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $html .= '<tr style="page-break-inside: avoid;">';
     
         if ($shouldExclude) {
-            // Merge all columns into one
-            $html .= '<td colspan="10" style="width: 100%; text-align:center; border: 1px solid #000; font-weight: bold;">' . $contentSafe . '</td>';
+            // Show empty cell for lecture number
+            $html .= '<td style="width: 5%; text-align:center; border: 1px solid #000;"></td>';
+            $html .= '<td style="width: 10%; border: 1px solid #000;">' . $proposedDate . '</td>';
+            // Merge the remaining columns (8 columns)
+            $html .= '<td colspan="8" style="text-align:center; border: 1px solid #000; font-weight: bold;">' . $contentSafe . '</td>';
         } else {
-            // Normal row structure
+            // Normal row structure (no merging)
             $html .= '<td style="width: 5%; text-align:center; border: 1px solid #000;">' . $lectureNumber++ . '</td>';
             $html .= '<td style="width: 10%; border: 1px solid #000;">' . $proposedDate . '</td>';
             $html .= '<td style="width: 25%; border: 1px solid #000;">' . $contentSafe . '</td>';
