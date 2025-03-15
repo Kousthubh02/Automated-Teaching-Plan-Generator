@@ -162,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Show empty cell for lecture number
             $html .= '<td style="width: 5%; text-align:center; border: 1px solid #000;"></td>';
             $html .= '<td style="width: 10%; border: 1px solid #000;">' . $proposedDate . '</td>';
-            // Merge the remaining columns (8 columns)
+            // Merge the remaining columns
             $html .= '<td colspan="8" style="text-align:center; border: 1px solid #000; font-weight: bold;">' . $contentSafe . '</td>';
         } else {
             // Normal row structure (no merging)
