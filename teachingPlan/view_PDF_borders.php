@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     class MYPDF extends TCPDF {
         public function Header() {
             // Custom header for each page (Logo and Institute Name)
-            $imageFile = 'BW_logo.png'; // Change to the actual image path
+            $imageFile = '../images/BW_logo.png'; // Change to the actual image path
             $this->Image($imageFile, 10, 5, 30);
 
             // Set font
@@ -128,6 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <td style="padding: 8px; text-align: left; width: 50%;">Name of the Faculty: </td>
                 <td style="padding: 8px; text-align: left; width: 50%;">Semester: </td>
             </tr>
+            <tr><td></td></tr>
         </table>';
     
     $html .= "<br>";
@@ -186,17 +187,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $html .= '</table>';
 
     // Write the HTML content to the PDF
+    // After writing the main table, calculate remaining space and add references table conditionally
     $pdf->writeHTML($html, true, false, true, false, '');
 
-    // Add a new page for references
-    $pdf->AddPage();
+    // Calculate remaining space on the current page
+    $remainingSpace = $pdf->getPageHeight() - $pdf->GetY(); // Get remaining vertical space
+    $referencesTableHeight = 100; // Approximate height of the references table (adjust as needed)
 
-    // Set the font to Times New Roman with size 10
-    $pdf->SetFont('times', '', 10);
-    $pdf->Ln(10);
+    // Check if there's enough space for the references table
+    if ($remainingSpace < $referencesTableHeight) {
+        // Add a new page if there isn't enough space
+        $pdf->AddPage();
+    }
 
     // Initialize the HTML for the references table
-    $html = '<h3 style="text-align:center;">References </h3>';
+    $html = '<h3 style="text-align:center;">References</h3>';
     $html .= '<table cellspacing="0" cellpadding="4" style="width: 100%; border-collapse: collapse; font-size: 12px;">';
 
     // Write the header row for the references table
@@ -216,23 +221,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $textbookCodes = ['T1', 'T2', 'T3', 'T4', 'T5'];
     $webReferenceCodes = ['O1', 'O2', 'O3', 'O4', 'O5'];
 
-    $html .= '<tr>';
-    $html .= '<td style="width: 33%; border: 1px solid #000;">';
-    foreach ($referenceCodes as $code) {
-        $html .= '<p><strong>' . $code . ':</strong> ' . htmlspecialchars($subjectReferences[$code] ?? '') . '</p>';
+    for ($i = 0; $i < 5; $i++) {
+        $html .= '<tr>';
+        
+        // References column
+        $html .= '<td style="width: 33%; border: 1px solid #000;">';
+        $html .= '<strong>' . $referenceCodes[$i] . ':</strong> ' . htmlspecialchars($subjectReferences[$referenceCodes[$i]] ?? '');
+        $html .= '</td>';
+        
+        // Textbooks column
+        $html .= '<td style="width: 33%; border: 1px solid #000;">';
+        $html .= '<strong>' . $textbookCodes[$i] . ':</strong> ' . htmlspecialchars($subjectReferences[$textbookCodes[$i]] ?? '');
+        $html .= '</td>';
+        
+        // Others column
+        $html .= '<td style="width: 33%; border: 1px solid #000;">';
+        $html .= '<strong>' . $webReferenceCodes[$i] . ':</strong> ' . htmlspecialchars($subjectReferences[$webReferenceCodes[$i]] ?? '');
+        $html .= '</td>';
+        
+        $html .= '</tr>';
     }
-    $html .= '</td>';
-    $html .= '<td style="width: 33%; border: 1px solid #000;">';
-    foreach ($textbookCodes as $code) {
-        $html .= '<p><strong>' . $code . ':</strong> ' . htmlspecialchars($subjectReferences[$code] ?? '') . '</p>';
-    }
-    $html .= '</td>';
-    $html .= '<td style="width: 33%; border: 1px solid #000;">';
-    foreach ($webReferenceCodes as $code) {
-        $html .= '<p><strong>' . $code . ':</strong> ' . htmlspecialchars($subjectReferences[$code] ?? '') . '</p>';
-    }
-    $html .= '</td>';
-    $html .= '</tr>';
 
     $html .= '</tbody></table>';
 
