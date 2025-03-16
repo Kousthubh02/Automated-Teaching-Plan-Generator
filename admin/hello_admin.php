@@ -1,28 +1,16 @@
 <?php
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "1402";
-$dbname = "major_testing";
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// Include the database connection file
+require_once '../database/db_connection.php';
 
 // Fetch the current editable value
-$sql = "SELECT editable FROM settings WHERE id = 1";
-$result = $conn->query($sql);
-$currentValue = 0;  // Default value
-if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $currentValue = $row['editable'];
+try {
+    $sql = "SELECT editable FROM settings WHERE id = 1";
+    $stmt = $pdo->query($sql);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $currentValue = $row ? $row['editable'] : 0;  // Default value if no row is found
+} catch (PDOException $e) {
+    die("Error fetching editable status: " . $e->getMessage());
 }
-
-$conn->close();
 
 // Convert the editable value to a string message
 $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";

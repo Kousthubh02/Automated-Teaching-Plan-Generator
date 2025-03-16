@@ -1,53 +1,46 @@
 <?php
-// Must exist as a separate file or script as there are two buttons
-// Convert to message box to show editable value without shifting pages, and show on admin page also
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "1402";
-$dbname = "major_testing";
+// Include the database connection file
+require_once '../database/db_connection.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
+// Check if the request method is POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Fetch current editable value
-    $sql = "SELECT editable FROM settings WHERE id = 1";
-    $result = $conn->query($sql);
+    try {
+        // Fetch the current editable value
+        $sql = "SELECT editable FROM settings WHERE id = 1";
+        $stmt = $pdo->query($sql);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $currentValue = $row['editable'];
+        if ($row) {
+            $currentValue = $row['editable'];
 
-        // Toggle the value
-        $newValue = $currentValue == 1 ? 0 : 1;
-        $updateSql = "UPDATE settings SET editable = $newValue WHERE id = 1";
+            // Toggle the value
+            $newValue = $currentValue == 1 ? 0 : 1;
 
-        if ($conn->query($updateSql) === TRUE) {
-            echo "Editable value updated successfully to: " . ($newValue == 1 ? "Editable" : "Not Editable");
+            // Update the editable value in the database
+            $updateSql = "UPDATE settings SET editable = :newValue WHERE id = 1";
+            $updateStmt = $pdo->prepare($updateSql);
+            $updateStmt->execute(['newValue' => $newValue]);
+
+            // Redirect back to the admin page without displaying a message
+            //header("Location: ../admin/admin_2.php");
+            //exit();
         } else {
-            echo "Error updating record: " . $conn->error;
+            die("No record found with id = 1");
         }
-    } else {
-        echo "No record found with id = 1";
+    } catch (PDOException $e) {
+        die("Error updating record: " . $e->getMessage());
     }
 }
 
-// Fetch the current value to display
-$sql = "SELECT editable FROM settings WHERE id = 1";
-$result = $conn->query($sql);
-$currentValue = 0;
-if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $currentValue = $row['editable'];
+// Fetch the current editable value to display
+try {
+    $sql = "SELECT editable FROM settings WHERE id = 1";
+    $stmt = $pdo->query($sql);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $currentValue = $row ? $row['editable'] : 0; // Default value if no row is found
+} catch (PDOException $e) {
+    die("Error fetching editable status: " . $e->getMessage());
 }
-
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -111,5 +104,3 @@ $conn->close();
     </div>
 </body>
 </html>
-
-
