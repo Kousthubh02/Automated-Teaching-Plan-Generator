@@ -134,7 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
 
-
 // --- 2. Process Subject References Update ---
 if (isset($_POST['subject_references'])) {
   if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
@@ -171,6 +170,20 @@ if (isset($_POST['subject_references'])) {
                   ':ref_code'   => $ref_code,
                   ':ref_content'=> $ref_content
               ]);
+          } else {
+              // If a row exists, update the data
+              $updateSql = "UPDATE reference_table 
+                             SET ref_content = :ref_content 
+                             WHERE sub_id = :sub_id 
+                             AND division = :division 
+                             AND ref_code = :ref_code";
+              $updateStmt = $pdo->prepare($updateSql);
+              $updateStmt->execute([
+                  ':sub_id'     => $sub_id_post,
+                  ':division'   => $division,
+                  ':ref_code'   => $ref_code,
+                  ':ref_content'=> $ref_content
+              ]);
           }
       }
       $message .= ' References updated successfully.';
@@ -178,6 +191,10 @@ if (isset($_POST['subject_references'])) {
       $message .= ' Error updating references: ' . $e->getMessage();
   }
 }
+
+
+
+
   // Return response based on the request type (AJAX or normal)
   if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
     header('Content-Type: application/json');
