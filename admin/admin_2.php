@@ -14,6 +14,28 @@ try {
 
 // Convert the editable value to a string message
 $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
+
+if (isset($_GET['semester'])) {
+    $semester = $_GET['semester'];
+    $query = "
+        SELECT s.sub_id, s.sub
+        FROM subject_table s
+        JOIN sem sem ON s.sem_id = sem.sem_id
+        WHERE sem.sem_id = :semester
+    ";
+    try {
+        $stmt = $pdo->prepare($query);
+        $stmt->bindParam(':semester', $semester, PDO::PARAM_INT);
+        $stmt->execute();
+        $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        header('Content-Type: application/json');
+        echo json_encode($subjects);
+        exit;
+    } catch (PDOException $e) {
+        echo json_encode(['error' => 'Database query failed: ' . $e->getMessage()]);
+        exit;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -223,7 +245,7 @@ $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
             <label for="end_date">End Date:</label>
             <input type="date" id="end_date" name="end_date" required>
 
-            <label for="exclude_dates">Exclude Dates (.csv):</label>
+            <label for="exclude_dates">Non Teaching Dates (.csv):</label>
             <input type="file" id="exclude_dates" name="exclude_dates" accept=".csv" required>
 
             <br><br>
@@ -249,6 +271,66 @@ $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
         <!-- Toggle Editable Button -->
         <button type="button" onclick="submitFormToToggle()">Toggle Editable</button>
 
+        <!-- New Horizontal Selection Section -->
+        <div class="horizontal-fields" style="margin-top: 20px;">
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                <!-- Semester Dropdown -->
+                <div style="flex: 1;">
+                    <label>Semester</label>
+                    <select id="control_sem" style="width: 100%; padding: 10px;">
+                        <option value="">Select Semester</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+
+                <!-- Subject Dropdown -->
+                <div style="flex: 1;">
+                    <label>Subject</label>
+                    <select id="control_subject" style="width: 100%; padding: 10px;">
+                        <option value="">Select Subject</option>
+                    </select>
+                </div>
+
+                <!-- Division Dropdown -->
+                <div style="flex: 1;">
+                    <label>Division</label>
+                    <select id="control_division" style="width: 100%; padding: 10px;">
+                        <option value="">Select Division</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="NONE">NONE</option>
+                    </select>
+                </div>
+
+                <!-- Delete Button -->
+                <div style="margin-top: 22px;">
+                    <button type="button" 
+                            style="background-color: red; padding: 10px 20px; width: auto;"
+                            onclick="handleDelete()">
+                        DELETE
+                    </button>
+                </div>
+            </div>
+
+            <!-- Add the new buttons here -->
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" 
+                        style="background-color: red; padding: 10px 20px; width: 100%;"
+                        onclick="handleDeleteAll()">
+                    Delete All
+                </button>
+                <button type="button" 
+                        style="background-color: #ffc107; padding: 10px 20px; width: 100%;"
+                        onclick="handleDeleteNonTeachingDates()">
+                    Delete Non Teaching Dates
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -265,6 +347,65 @@ $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
         var form = document.getElementById('adminForm');
         form.action = 'adminLogic.php'; // Reset the action to adminLogic.php
     });
+
+    // Fetch Subjects for Control Section
+    document.getElementById('control_sem').addEventListener('change', function() {
+        const selectedSemester = this.value;
+        const subjectDropdown = document.getElementById('control_subject');
+        
+        if (selectedSemester) {
+            fetch(`?semester=${selectedSemester}`)
+                .then(response => response.json())
+                .then(data => {
+                    subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
+                    data.forEach(subject => {
+                        const option = document.createElement("option");
+                        option.value = subject.sub_id;
+                        option.textContent = subject.sub;
+                        subjectDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching subjects:", error);
+                });
+        } else {
+            subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
+        }
+    });
+
+    function handleDelete() {
+        // Add your delete logic here
+        const semester = document.getElementById('control_sem').value;
+        const subject = document.getElementById('control_subject').value;
+        const division = document.getElementById('control_division').value;
+        
+        if (!semester || !subject || !division) {
+            alert('Please select all fields before deleting');
+            return;
+        }
+        
+        // Example confirmation dialog
+        if (confirm('Are you sure you want to delete this entry?')) {
+            console.log('Deleting:', { semester, subject, division });
+            // Add actual delete implementation here
+        }
+    }
+
+    function handleDeleteAll() {
+        if (confirm('Are you sure you want to delete all entries?')) {
+            // Add your delete all logic here
+            console.log('Deleting all entries');
+            // Example: fetch('/delete-all', { method: 'POST' }).then(response => response.json()).then(data => { console.log(data); });
+        }
+    }
+
+    function handleDeleteNonTeachingDates() {
+        if (confirm('Are you sure you want to delete all non-teaching dates?')) {
+            // Add your delete non-teaching dates logic here
+            console.log('Deleting non-teaching dates');
+            // Example: fetch('/delete-non-teaching-dates', { method: 'POST' }).then(response => response.json()).then(data => { console.log(data); });
+        }
+    }
 </script>
 
 </body>
