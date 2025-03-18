@@ -96,7 +96,7 @@ if (isset($_GET['semester'])) {
             font-weight: bold;
         }
 
-        input[type="text"], input[type="date"], input[type="file"] {
+        input[type="text"], input[type="date"], input[type="file"], select {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -178,7 +178,7 @@ if (isset($_GET['semester'])) {
                 padding: 12px; /* Increase padding for better touch targets */
             }
 
-            input[type="text"], input[type="date"], input[type="file"] {
+            input[type="text"], input[type="date"], input[type="file"], select {
                 padding: 12px; /* Increase padding for better touch targets */
             }
 
@@ -203,7 +203,7 @@ if (isset($_GET['semester'])) {
                 padding: 12px; /* Ensure buttons are easy to tap */
             }
 
-            input[type="text"], input[type="date"], input[type="file"] {
+            input[type="text"], input[type="date"], input[type="file"], select {
                 padding: 10px; /* Adjust input padding for smaller screens */
             }
 
