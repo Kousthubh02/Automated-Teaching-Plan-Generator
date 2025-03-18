@@ -22,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $updateStmt->execute(['newValue' => $newValue]);
 
             // Redirect back to the admin page without displaying a message
-            //header("Location: ../admin/admin_2.php");
-            //exit();
+            header("Location: ../admin/admin_2.php");
+            exit();
         } else {
             die("No record found with id = 1");
         }
@@ -100,7 +100,7 @@ try {
                 <?php echo $currentValue == 1 ? "Editable" : "Not Editable"; ?>
             </span>
         </h1>
-        <a href="../admin/hello_admin.php" class="btn-link">Go Back to Admin Page</a>
+        <a href="../admin/admin_2.php" class="btn-link">Go Back to Admin Page</a>
     </div>
 </body>
 </html>
