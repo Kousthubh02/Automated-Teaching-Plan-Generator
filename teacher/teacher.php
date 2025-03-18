@@ -197,7 +197,7 @@ if (isset($_GET['semester'])) {
             </div>
             <div class="button-container">
                 <button type="submit">Generate Dates</button>
-                <button>Update Dates</button>
+                <button type="button">Update Dates</button>
             </div>
         </form>
     </div>
