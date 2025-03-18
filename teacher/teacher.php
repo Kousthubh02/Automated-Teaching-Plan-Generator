@@ -136,7 +136,7 @@ if (isset($_GET['semester'])) {
     </div>
     <div class="container">
         <h2>Teacher Portal</h2>
-        <form method="post" action="teacherLogic.php">
+        <form id="subDaysForm" method="post" action="teacherLogic.php">
             <label for="sem_id">Current Semester</label>
             <select name="sem_id" id="current_sem" required>
                 <option value="" disabled selected>Select Semester</option>
@@ -196,8 +196,8 @@ if (isset($_GET['semester'])) {
                 </div>
             </div>
             <div class="button-container">
-                <button type="submit">Generate Dates</button>
-                <button type="button">Update Dates</button>
+                <button type="submit" id="generate">Generate Dates</button>
+                <button type="submit" onclick="updateDates()">Update Dates</button>
             </div>
         </form>
     </div>
@@ -297,6 +297,18 @@ if (isset($_GET['semester'])) {
                 subjectNameInput.value = subjectName;
             });
         });
+
+        function updateDates() {
+            var form = document.getElementById('subDaysForm');
+            form.action = 'updateLogic.php'; // Set the action to toggle.php
+        }
+
+        // Reset form action when Submit button is clicked
+        document.querySelector('generate').addEventListener('click', function () {
+            var form = document.getElementById('subDaysForm');
+            form.action = 'teacherLogic.php'; // Reset the action to adminLogic.php
+        });
+
     </script>
 </body>
 </html>

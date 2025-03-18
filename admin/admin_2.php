@@ -120,7 +120,7 @@ if (isset($_GET['semester'])) {
         button.logout {
             position: absolute; /* Position the logout button */
             top: 10px; /* Distance from the top */
-            right: 10px; /* Distance from the right */
+            right: 50px; /* Distance from the right */
             width: auto;
             background-color: red;
             padding: 8px 12px; /* Smaller padding for smaller screens */
@@ -188,7 +188,7 @@ if (isset($_GET['semester'])) {
 
             button.logout {
                 top: 5px; /* Adjust position for smaller screens */
-                right: 5px; /* Adjust position for smaller screens */
+                right: 20px; /* Adjust position for smaller screens */
                 padding: 6px 10px; /* Smaller padding for smaller screens */
                 font-size: 0.8em; /* Smaller font size for smaller screens */
             }
