@@ -539,13 +539,15 @@ $totalLectures = count($plans);
     <td>
       <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
         placeholder="Enter content" <?= $isEditable ? '' : 'readonly' ?>
-        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
+        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+        onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
     </td>
     <td></td>
     <td>
       <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
         placeholder="Enter content not covered" <?= $isEditable ? '' : 'readonly' ?>
-        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
+        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+        onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
     </td>
     <td>
       <table>
@@ -647,7 +649,8 @@ $totalLectures = count($plans);
           $referenceCodes = ['R1', 'R2', 'R3', 'R4', 'R5'];
           foreach ($referenceCodes as $code): ?>
             <label class="references-label"><?= $code ?></label>
-            <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
+            <textarea oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+                      onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" class="references-textarea" name="subject_references[<?= $code ?>]"
               placeholder="Enter reference book used"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
         </td>
@@ -656,7 +659,8 @@ $totalLectures = count($plans);
           $textbookCodes = ['T1', 'T2', 'T3', 'T4', 'T5'];
           foreach ($textbookCodes as $code): ?>
             <label class="references-label"><?= $code ?></label>
-            <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
+            <textarea oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+                      onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" class="references-textarea" name="subject_references[<?= $code ?>]"
               placeholder="Enter textbook used"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
         </td>
@@ -665,7 +669,8 @@ $totalLectures = count($plans);
           $webReferenceCodes = ['O1', 'O2', 'O3', 'O4', 'O5'];
           foreach ($webReferenceCodes as $code): ?>
             <label class="references-label"><?= $code ?></label>
-            <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
+            <textarea oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+                      onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" class="references-textarea" name="subject_references[<?= $code ?>]"
               placeholder="Enter any other reference used"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
 
@@ -675,7 +680,8 @@ $totalLectures = count($plans);
     </table>
 
     <h2>Missing Content</h2>
-    <textarea class="missing-content-textarea" placeholder="All topics from last year covered!"></textarea>
+    <textarea oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+              onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" class="missing-content-textarea" placeholder="All topics from last year covered!"></textarea>
 
     <div class="button-container">
       <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
