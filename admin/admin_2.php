@@ -74,7 +74,7 @@ $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
             font-weight: bold;
         }
 
-        input[type="text"], input[type="date"], input[type="file"] {
+        input[type="text"], input[type="date"], input[type="file"], select {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -156,7 +156,7 @@ $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
                 padding: 12px; /* Increase padding for better touch targets */
             }
 
-            input[type="text"], input[type="date"], input[type="file"] {
+            input[type="text"], input[type="date"], input[type="file"], select {
                 padding: 12px; /* Increase padding for better touch targets */
             }
 
@@ -181,7 +181,7 @@ $editableStatus = $currentValue == 1 ? "Editable" : "Not Editable";
                 padding: 12px; /* Ensure buttons are easy to tap */
             }
 
-            input[type="text"], input[type="date"], input[type="file"] {
+            input[type="text"], input[type="date"], input[type="file"], select {
                 padding: 10px; /* Adjust input padding for smaller screens */
             }
 

@@ -303,10 +303,17 @@ $totalLectures = count($plans);
       font-size: 16px;
       /* Slightly reduced font size */
       cursor: pointer;
+      flex: 1;
     }
 
     .submit-btn:hover {
       background-color: #45a049;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 50px; /* Adjust the space between buttons */
     }
 
     .grey-row {
@@ -397,6 +404,25 @@ $totalLectures = count($plans);
       outline: none;
     }
 
+    .missing-content-textarea {
+      width: calc(100% - 10px);
+      height: 50px;
+      padding: 4px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #fff;
+      resize: none;
+      transition: 0.3s;
+      margin: 10px auto;
+    }
+
+    .missing-content-textarea:focus {
+      border-color: #007BFF;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      outline: none;
+    }
+
     @media (max-width: 768px) {
       .references-table {
         font-size: 12px;
@@ -405,25 +431,11 @@ $totalLectures = count($plans);
       .references-textarea {
         font-size: 12px;
       }
-    }
 
-    /* PDF button styling */
-    .pdf-btn {
-      display: block;
-      margin: 10px auto;
-      /* Reduced margin */
-      padding: 8px 16px;
-      /* Reduced padding */
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .pdf-btn:hover {
-      background-color: #0056b3;
+      .missing-content-textarea {
+        font-size: 12px;
+        padding: 3px;
+      }
     }
 
     /* Modal Popup Styling */
@@ -625,7 +637,7 @@ $totalLectures = count($plans);
     <input type="hidden" name="sub_id" value="<?= $subject_id ?>">
     <table class="references-table">
       <tr>
-        <th>References</th>
+        <th>Reference Books</th>
         <th>Textbooks</th>
         <th>Others</th>
       </tr>
@@ -636,7 +648,7 @@ $totalLectures = count($plans);
           foreach ($referenceCodes as $code): ?>
             <label class="references-label"><?= $code ?></label>
             <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
-              placeholder="Enter reference text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+              placeholder="Enter reference book used"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
         </td>
         <td>
@@ -645,7 +657,7 @@ $totalLectures = count($plans);
           foreach ($textbookCodes as $code): ?>
             <label class="references-label"><?= $code ?></label>
             <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
-              placeholder="Enter textbook text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+              placeholder="Enter textbook used"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
         </td>
         <td>
@@ -654,7 +666,7 @@ $totalLectures = count($plans);
           foreach ($webReferenceCodes as $code): ?>
             <label class="references-label"><?= $code ?></label>
             <textarea class="references-textarea" name="subject_references[<?= $code ?>]"
-              placeholder="Enter web reference text"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
+              placeholder="Enter any other reference used"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
 
 
@@ -662,8 +674,13 @@ $totalLectures = count($plans);
       </tr>
     </table>
 
-    <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
-    <button type="button" class="submit-btn" onclick="view_PDF()">View PDF</button>
+    <h2>Missing Content</h2>
+    <textarea class="missing-content-textarea" placeholder="All topics from last year covered!"></textarea>
+
+    <div class="button-container">
+      <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
+      <button type="button" class="submit-btn" onclick="view_PDF()">View PDF</button>
+    </div>
   </form>
 
 
