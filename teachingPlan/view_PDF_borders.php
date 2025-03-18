@@ -120,16 +120,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $html  = '<h2 style="text-align:center;">Department of Computer Engineering</h2>';
     $html .= '<h2 style="text-align:center;">Course Teaching Plan</h2>';
     $html .= '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <tr>
-                <td style="padding: 8px; text-align: left; width: 50%;">Course Code and Name: </td>
-                <td style="padding: 8px; text-align: left; width: 50%;">Academic Year: </td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; text-align: left; width: 50%;">Name of the Faculty: </td>
-                <td style="padding: 8px; text-align: left; width: 50%;">Semester: </td>
-            </tr>
-            <tr><td></td></tr>
-        </table>';
+                <tr>
+                    <td style="padding: 8px; text-align: left; width: 50%;">Course Code and Name: </td>
+                    <td style="padding: 8px; text-align: left; width: 50%;">Academic Year: </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; text-align: left; width: 50%;">Name of the Faculty: </td>
+                    <td style="padding: 8px; text-align: left; width: 50%;">Semester: </td>
+                </tr>
+                <tr><td></td></tr>
+            </table>';
     
     $html .= "<br>";
     $html .= '<table cellspacing="0" cellpadding="4" style="width: 100%; border-collapse: collapse;">';

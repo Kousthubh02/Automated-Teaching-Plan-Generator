@@ -81,6 +81,7 @@ if (isset($_GET['semester'])) {
             margin-top: 20px;
             display: flex;
             justify-content: center;
+            gap: 10px;
         }
         button {
             padding: 10px 20px;
@@ -195,7 +196,8 @@ if (isset($_GET['semester'])) {
                 </div>
             </div>
             <div class="button-container">
-                <button type="submit">Generate</button>
+                <button type="submit">Generate Dates</button>
+                <button type="button">Update Dates</button>
             </div>
         </form>
     </div>
