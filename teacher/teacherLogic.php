@@ -92,26 +92,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ");
 
 
-// insert teaching plan data
-foreach ($all_dates as $date) {
-    $currentDateObj = DateTime::createFromFormat('Y-m-d', $date);
-    $current_day = $currentDateObj->format('l');
-    
-    // Initialize NTD status
-    $isNTD = 0;
-    $content = '';
-    
-    // Check if date is excluded for this semester
-    if (isset($formatted_exclude_dates[$date])) {
-        $excl_data = $formatted_exclude_dates[$date];
-        $excl_sem = $excl_data['semester'];
+    // Insert teaching plan data
+    foreach ($all_dates as $date) {
+        $currentDateObj = DateTime::createFromFormat('Y-m-d', $date);
+        $current_day = $currentDateObj->format('l');
         
-        // Check semester match
-        if ($excl_sem === 'ALL' || in_array($sem_id, explode(',', $excl_sem))) {
-            $isNTD = 1;
-            $content = $excl_data['reason'];
+        // Initialize flags
+        $isNTD = 0;
+        $content = '';
+        $hasLecture = false; // Flag to check if there is at least one lecture on this date
+
+        // Check if date is excluded for this semester
+        if (isset($formatted_exclude_dates[$date])) {
+            $excl_data = $formatted_exclude_dates[$date];
+            $excl_sem = $excl_data['semester'];
             
-            // Insert a single entry for non-teaching days
+            // Check semester match
+            if ($excl_sem === 'ALL' || in_array($sem_id, explode(',', $excl_sem))) {
+                $isNTD = 1;
+                $content = $excl_data['reason'];
+            }
+        }
+
+        // Determine which week details to use
+        $details = ($currentDateObj <= $firstWeekEnd) ? $first_week_details : $regular_week_details;
+
+        // Check if there is at least one lecture on this date
+        foreach ($details as $detail) {
+            if (isset($detail['day'], $detail['lectures']) && $detail['day'] === $current_day) {
+                $hasLecture = true; // At least one lecture exists for this date
+                break; // No need to check further
+            }
+        }
+
+        // If it's a non-teaching day and has at least one lecture, insert NTD entry
+        if ($isNTD === 1 && $hasLecture) {
             $stmt_insert->execute([
                 ':subject' => $subject_name,
                 ':division' => $division,
@@ -120,33 +135,28 @@ foreach ($all_dates as $date) {
                 ':content' => $content,
                 ':isNTD' => $isNTD
             ]);
-            
-            // Skip the rest of the loop for this date
-            continue;
         }
-    }
 
-    // Determine which week details to use
-    $details = ($currentDateObj <= $firstWeekEnd) ? $first_week_details : $regular_week_details;
-
-    // Insert lectures for teaching days
-    foreach ($details as $detail) {
-        if (isset($detail['day'], $detail['lectures']) && $detail['day'] === $current_day) {
-            for ($i = 0; $i < (int)$detail['lectures']; $i++) {
-                $stmt_insert->execute([
-                    ':subject' => $subject_name,
-                    ':division' => $division,
-                    ':sem_id' => $sem_id,
-                    ':date' => $date,
-                    ':content' => $content,
-                    ':isNTD' => $isNTD
-                ]);
+        // If it's a teaching day and has lectures, insert lecture entries
+        if ($isNTD === 0 && $hasLecture) {
+            foreach ($details as $detail) {
+                if (isset($detail['day'], $detail['lectures']) && $detail['day'] === $current_day) {
+                    for ($i = 0; $i < (int)$detail['lectures']; $i++) {
+                        $stmt_insert->execute([
+                            ':subject' => $subject_name,
+                            ':division' => $division,
+                            ':sem_id' => $sem_id,
+                            ':date' => $date,
+                            ':content' => $content,
+                            ':isNTD' => 0 // Lectures are always teaching days
+                        ]);
+                    }
+                }
             }
         }
     }
-}
 
-        $pdo->commit();
+    $pdo->commit();
     } catch (PDOException $e) {
         $pdo->rollBack();
         echo "<p class='error-message'>Insert error: " . $e->getMessage() . "</p>";
