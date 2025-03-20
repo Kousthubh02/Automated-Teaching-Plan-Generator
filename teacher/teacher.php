@@ -132,7 +132,7 @@ if (isset($_GET['semester'])) {
 </head>
 <body>
     <div class="header">
-        <img src="path_to_logo.png" alt="Institute Logo">
+        <img src="../images/logo.png" alt="Institute Logo" width="100" height="100">
     </div>
     <div class="container">
         <h2>Teacher Portal</h2>
