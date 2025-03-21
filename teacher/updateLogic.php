@@ -155,8 +155,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo "<pre>";
     print_r($teaching_plan_data);
     echo "</pre>";
-}
 
+
+    // 1. Count number of keys aka length of the dictionary, store it in a variable called max_lectures
+    $max_lectures = count($teaching_plan_data);
+
+    // 2. Create a counter variable lectures_added initialized to 0
+    $lectures_added = 0;
+
+    // 3. Create a blank string called missing_content
+    $missing_content = "";
+
+    // 4. Fetch existing records from database using semester, subject, and division parameters from form data where isNTD=0
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM teaching_plan WHERE sem_id = :sem_id AND subject = :subject AND division = :division AND isNTD = 0");
+        $stmt->execute([
+            ':sem_id' => $sem_id,
+            ':subject' => $subject_name,
+            ':division' => $division
+        ]);
+        $existing_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Output existing records (for debugging purposes)
+        echo "<pre>";
+        print_r($existing_records);
+        echo "</pre>";
+    } catch (PDOException $e) {
+        echo "<p class='error-message'>Database error: " . $e->getMessage() . "</p>";
+        exit();
+    }
+
+}    
     // Display success page after insertion
 //     echo "
 //     <!DOCTYPE html>
