@@ -280,7 +280,7 @@ if (isset($_GET['semester'])) {
 
         <div class="cta">
             <a href="teachingplan.php">Go Back to Form</a>
-            <a href="viewPlans.php">View All Teaching Plans</a>
+            <!-- <a href="viewPlans.php">View All Teaching Plans</a> -->
         </div>
     </div>
 <script>
