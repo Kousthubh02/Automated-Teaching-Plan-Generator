@@ -545,7 +545,7 @@ $totalLectures = count($plans);
     <td></td>
     <td>
       <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
-        placeholder="Enter content not covered" <?= $isEditable ? '' : 'readonly' ?>
+        placeholder="Enter content not covered" 
         oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
         onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
     </td>

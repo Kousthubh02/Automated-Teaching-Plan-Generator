@@ -224,7 +224,7 @@ if (isset($_GET['semester'])) {
 
 <!-- Header Container -->
 <div class="header">
-    <h1><img src="./college.jpeg" alt="Institute Logo"></h1>
+    <h1><img src="../images/logo.png" alt="Institute Logo" width="100" height="100"></h1>
     <h2>Teaching Plan Generator</h2>
     <h3>Admin Portal</h3>
     <!-- Logout Button -->

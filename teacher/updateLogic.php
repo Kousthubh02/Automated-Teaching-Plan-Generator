@@ -153,10 +153,91 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     // Output the dictionary (for debugging purposes)
     echo "<pre>";
+    //print_r($teaching_plan_data);
+    echo "</pre>";
+
+
+    // 1. Count number of keys aka length of the dictionary, store it in a variable called max_lectures
+    $max_lectures = count($teaching_plan_data);
+
+    // 2. Create a counter variable lectures_added initialized to 0
+    $lectures_added = 0;
+
+    // 3. Create a blank string called missing_content
+    $missing_content = "";
+
+    // 4. Fetch existing records from database using semester, subject, and division parameters from form data where isNTD=0
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM teaching_plan WHERE sem_id = :sem_id AND subject = :subject AND division = :division AND isNTD = 0");
+        $stmt->execute([
+            ':sem_id' => $sem_id,
+            ':subject' => $subject_name,
+            ':division' => $division
+        ]);
+        $existing_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Output existing records (for debugging purposes)
+        echo "<pre>";
+        print_r($existing_records);
+        echo "</pre>";
+    } catch (PDOException $e) {
+        echo "<p class='error-message'>Database error: " . $e->getMessage() . "</p>";
+        exit();
+    }
+
+    // Algorithm implementation
+    reset($teaching_plan_data);
+
+    foreach ($existing_records as $old_row) {
+        // Stop processing if we've reached the max_lectures limit
+        if ($lectures_added >= $max_lectures) {
+            break;
+        }
+
+        // Get current key and row
+        $current_key = key($teaching_plan_data);
+        $new_row = current($teaching_plan_data);
+
+        // Skip non-teaching days (isNTD === 1)
+        while ($new_row !== false && $new_row['isNTD'] === 1) {
+            next($teaching_plan_data);
+            $current_key = key($teaching_plan_data);
+            $new_row = current($teaching_plan_data);
+        }
+
+        // If $new_row is false, we've reached the end of the array
+        if ($new_row === false) {
+            break; // Exit the loop early
+        }
+
+        // Copy content from old row to new row IN THE ORIGINAL ARRAY
+        if ($current_key !== null) {
+            $teaching_plan_data[$current_key]['content'] = $old_row['content'];
+            $lectures_added++;
+            echo $lectures_added;
+            next($teaching_plan_data);
+        }
+    }
+
+    // After the loop, check if there are remaining $old_row entries in $existing_records
+    if ($lectures_added < count($existing_records)) {
+        // Get the remaining $old_row entries
+        $remaining_records = array_slice($existing_records, $lectures_added);
+
+        // Append their content to $missing_content
+        foreach ($remaining_records as $old_row) {
+            $missing_content .= $old_row['content'] . "; ";
+        }
+    }
+
+    // Print the updated teaching plan data
+    echo "<pre>";
     print_r($teaching_plan_data);
     echo "</pre>";
-}
 
+    // Print missing content
+    echo "<p>Missing Content:" . rtrim($missing_content) . "</p>";
+}    
     // Display success page after insertion
 //     echo "
 //     <!DOCTYPE html>
