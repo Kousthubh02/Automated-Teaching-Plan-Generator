@@ -335,6 +335,30 @@ if (isset($_GET['semester'])) {
 </div>
 
 <script>
+function handleDeleteNonTeachingDates() {
+    if (confirm('Are you sure you want to delete all non-teaching dates?')) {
+        fetch('adminLogic.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'action=delete_non_teaching_dates'
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            console.log(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+}
+
+
+
+
+
     // Function to submit the form to toggle.php
     function submitFormToToggle() {
         var form = document.getElementById('adminForm');
@@ -374,38 +398,84 @@ if (isset($_GET['semester'])) {
     });
 
     function handleDelete() {
-        // Add your delete logic here
-        const semester = document.getElementById('control_sem').value;
-        const subject = document.getElementById('control_subject').value;
-        const division = document.getElementById('control_division').value;
+    const semester = document.getElementById('control_sem').value;
+    const subject = document.getElementById('control_subject').value;
+    const division = document.getElementById('control_division').value;
+    
+    // Log the parameters on the client side
+    console.log("Attempting to delete entry with parameters:", { semester, subject, division });
+    
+    if (!semester || !subject || !division) {
+        alert('Please select all fields before deleting');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to delete this teaching plan entry?')) {
+        // Build the URL-encoded parameters
+        const params = new URLSearchParams();
+        params.append("action", "delete_teaching_plan");
+        params.append("semester", semester);
+        params.append("subject", subject);
+        params.append("division", division);
         
-        if (!semester || !subject || !division) {
-            alert('Please select all fields before deleting');
-            return;
-        }
+        console.log("Sending request with parameters:", params.toString());
         
-        // Example confirmation dialog
-        if (confirm('Are you sure you want to delete this entry?')) {
-            console.log('Deleting:', { semester, subject, division });
-            // Add actual delete implementation here
-        }
+        fetch('adminLogic.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: params.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            console.log("Server response:", data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
+}
 
-    function handleDeleteAll() {
-        if (confirm('Are you sure you want to delete all entries?')) {
-            // Add your delete all logic here
-            console.log('Deleting all entries');
-            // Example: fetch('/delete-all', { method: 'POST' }).then(response => response.json()).then(data => { console.log(data); });
-        }
+function handleDeleteAll() {
+    if (confirm('Are you sure you want to delete ALL teaching plan entries?')) {
+        console.log("Sending request to delete all teaching plan entries.");
+        fetch('adminLogic.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=delete_all_teaching_plan'
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            console.log("Server response:", data);
+        })
+        .catch(error => console.error('Error:', error));
     }
+}
 
-    function handleDeleteNonTeachingDates() {
-        if (confirm('Are you sure you want to delete all non-teaching dates?')) {
-            // Add your delete non-teaching dates logic here
-            console.log('Deleting non-teaching dates');
-            // Example: fetch('/delete-non-teaching-dates', { method: 'POST' }).then(response => response.json()).then(data => { console.log(data); });
-        }
+function handleDeleteNonTeachingDates() {
+    if (confirm('Are you sure you want to delete all non-teaching dates?')) {
+        console.log("Sending request to delete all non-teaching dates.");
+        fetch('adminLogic.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'action=delete_non_teaching_dates'
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            console.log("Server response:", data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
+}
+
 </script>
 
 </body>

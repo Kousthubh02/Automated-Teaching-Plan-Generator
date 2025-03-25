@@ -60,9 +60,6 @@ if (isset($_GET['semester'])) {
             font-size: 24px;
             margin-bottom: 30px;
         }
-        .form-group {
-            margin-bottom: 20px;
-        }
         label {
             display: block;
             margin: 8px;
@@ -100,14 +97,14 @@ if (isset($_GET['semester'])) {
         }
         .day-container {
             display: flex;
-            justify-content: flex-start; /* Align elements to the left */
+            justify-content: flex-start;
             align-items: center;
-            gap: 10px; /* Consistent spacing between elements */
+            gap: 10px;
             margin-bottom: 10px;
         }
         .day-container select,
         .day-container input {
-            width: 30%; /* Fixed width for dropdown and input */
+            width: 30%;
             padding: 10px;
             border-radius: 4px;
             border: 1px solid #ccc;
@@ -164,13 +161,12 @@ if (isset($_GET['semester'])) {
                 <div id="first-week-days-container">
                     <div class="day-container">
                         <select name="first_week_details[0][day]" required>
+                            <option value="">Select Day</option>
                             <option value="Monday">Monday</option>
                             <option value="Tuesday">Tuesday</option>
                             <option value="Wednesday">Wednesday</option>
                             <option value="Thursday">Thursday</option>
                             <option value="Friday">Friday</option>
-                            <option value="Saturday">Saturday</option>
-                            <option value="Sunday">Sunday</option>
                         </select>
                         <input type="number" name="first_week_details[0][lectures]" placeholder="Lectures per Day" min="1" required>
                         <button type="button" class="add-day-btn">Add Day</button>
@@ -182,13 +178,12 @@ if (isset($_GET['semester'])) {
                 <div id="regular-week-days-container">
                     <div class="day-container">
                         <select name="regular_week_details[0][day]" required>
+                            <option value="">Select Day</option>
                             <option value="Monday">Monday</option>
                             <option value="Tuesday">Tuesday</option>
                             <option value="Wednesday">Wednesday</option>
                             <option value="Thursday">Thursday</option>
                             <option value="Friday">Friday</option>
-                            <option value="Saturday">Saturday</option>
-                            <option value="Sunday">Sunday</option>
                         </select>
                         <input type="number" name="regular_week_details[0][lectures]" placeholder="Lectures per Day" min="1" required>
                         <button type="button" class="add-day-btn">Add Day</button>
@@ -202,58 +197,85 @@ if (isset($_GET['semester'])) {
         </form>
     </div>
     <script>
-        let firstWeekCount = 1;
-        let regularWeekCount = 1;
+        // Global list of days: Monday to Friday only
+        const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-        // First Week Days Event Listener
+        // Helper: Return an array of already selected days within a container element
+        function getSelectedDays(container) {
+            const selects = container.querySelectorAll("select");
+            let selected = [];
+            selects.forEach(select => {
+                if (select.value) {
+                    selected.push(select.value);
+                }
+            });
+            return selected;
+        }
+
+        // Helper: Create HTML for a dropdown (select) that shows only available days
+        function createDayDropdownHTML(index, availableDays, namePrefix) {
+            let optionsHTML = '<option value="">Select Day</option>';
+            availableDays.forEach(day => {
+                optionsHTML += `<option value="${day}">${day}</option>`;
+            });
+            return `<select name="${namePrefix}[${index}][day]" required>
+                        ${optionsHTML}
+                    </select>`;
+        }
+
+        // First Week Days Event Listener with filtering for repeated days
         document.getElementById('first-week-days-container').addEventListener('click', function(event) {
             if (event.target.classList.contains('add-day-btn')) {
-                const currentContainer = event.target.parentElement;
-                const newDayContainer = document.createElement('div');
-                newDayContainer.classList.add('day-container');
-                newDayContainer.innerHTML = `
-                    <select name="first_week_details[${firstWeekCount}][day]" required>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                        <option value="Sunday">Sunday</option>
-                    </select>
-                    <input type="number" name="first_week_details[${firstWeekCount}][lectures]" placeholder="Lectures per Day" min="1" required>
+                const container = document.getElementById('first-week-days-container');
+                const selectedDays = getSelectedDays(container);
+                const availableDays = allDays.filter(day => !selectedDays.includes(day));
+                
+                if (availableDays.length === 0) {
+                    alert("All days have been selected for the First Week.");
+                    return;
+                }
+                
+                const index = container.querySelectorAll('.day-container').length;
+                const dropdownHTML = createDayDropdownHTML(index, availableDays, "first_week_details");
+
+                const newDiv = document.createElement("div");
+                newDiv.classList.add("day-container");
+                newDiv.innerHTML = `
+                    ${dropdownHTML}
+                    <input type="number" name="first_week_details[${index}][lectures]" placeholder="Lectures per Day" min="1" required>
                     <button type="button" class="add-day-btn">Add Day</button>
                     <button type="button" class="remove-day-btn">Remove</button>
                 `;
-                currentContainer.parentNode.insertBefore(newDayContainer, currentContainer.nextSibling);
-                firstWeekCount++;
+                container.appendChild(newDiv);
             } else if (event.target.classList.contains('remove-day-btn')) {
                 event.target.parentElement.remove();
             }
         });
 
-        // Regular Week Days Event Listener
+        // Regular Week Days Event Listener with filtering for repeated days
         document.getElementById('regular-week-days-container').addEventListener('click', function(event) {
             if (event.target.classList.contains('add-day-btn')) {
-                const currentContainer = event.target.parentElement;
-                const newDayContainer = document.createElement('div');
-                newDayContainer.classList.add('day-container');
-                newDayContainer.innerHTML = `
-                    <select name="regular_week_details[${regularWeekCount}][day]" required>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                        <option value="Sunday">Sunday</option>
-                    </select>
-                    <input type="number" name="regular_week_details[${regularWeekCount}][lectures]" placeholder="Lectures per Day" min="1" required>
+                const container = document.getElementById('regular-week-days-container');
+                const selectedDays = getSelectedDays(container);
+                const availableDays = allDays.filter(day => !selectedDays.includes(day));
+                
+                if (availableDays.length === 0) {
+                    alert("All days have been selected for the Regular Week.");
+                    return;
+                }
+                
+                const index = container.querySelectorAll('.day-container').length;
+                const dropdownHTML = createDayDropdownHTML(index, availableDays, "regular_week_details");
+
+                const newDiv = document.createElement("div");
+                newDiv.classList.add("day-container");
+                newDiv.innerHTML = `
+                    ${dropdownHTML}
+                    <input type="number" name="regular_week_details[${index}][lectures]" placeholder="Lectures per Day" min="1" required>
                     <button type="button" class="add-day-btn">Add Day</button>
                     <button type="button" class="remove-day-btn">Remove</button>
                 `;
-                currentContainer.parentNode.insertBefore(newDayContainer, currentContainer.nextSibling);
-                regularWeekCount++;
+                container.appendChild(newDiv);
             } else if (event.target.classList.contains('remove-day-btn')) {
                 event.target.parentElement.remove();
             }
@@ -300,15 +322,14 @@ if (isset($_GET['semester'])) {
 
         function updateDates() {
             var form = document.getElementById('subDaysForm');
-            form.action = 'updateLogic.php'; // Set the action to toggle.php
+            form.action = 'updateLogic.php'; // Set the action to updateLogic.php
         }
 
-        // Reset form action when Submit button is clicked
-        document.querySelector('generate').addEventListener('click', function () {
+        // Reset form action when Submit button is clicked (if needed)
+        document.querySelector('button#generate').addEventListener('click', function () {
             var form = document.getElementById('subDaysForm');
-            form.action = 'teacherLogic.php'; // Reset the action to adminLogic.php
+            form.action = 'teacherLogic.php';
         });
-
     </script>
 </body>
 </html>
