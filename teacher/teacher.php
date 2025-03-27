@@ -54,11 +54,12 @@ if (isset($_GET['semester'])) {
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 80px; /* Added space for floating button */
         }
         h2 {
             text-align: center;
             font-size: 24px;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
         label {
             display: block;
@@ -124,6 +125,60 @@ if (isset($_GET['semester'])) {
         .day-container .remove-day-btn {
             background-color: red;
             color: white;
+        }
+        /* Floating Help Button Styles */
+        .floating-help-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 20px;
+            background: linear-gradient(45deg,rgb(46, 46, 111),rgb(45, 97, 240), #0f3460,rgb(51, 141, 251));
+            background-size: 300% 300%;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 0 0 rgba(56, 109, 216, 0.7);
+            z-index: 1000;
+            animation: gradientBG 8s ease infinite, 
+                       initialPulse 3s ease 1,
+                       pulse 2s ease infinite 3s;
+            transition: all 0.3s ease;
+        }
+
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes initialPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 109, 216, 0.7); }
+            50% { transform: scale(1.2); box-shadow: 0 0 0 15px rgba(56, 109, 216, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 109, 216, 0); }
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 174, 239, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 174, 239, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 174, 239, 0); }
+        }
+        @media (max-width: 768px) {
+            .day-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .day-container select,
+            .day-container input,
+            .day-container button {
+                width: 100%;
+            }
+            .floating-help-btn {
+                padding: 10px 15px;
+                font-size: 14px;
+                bottom: 20px;
+                right: 20px;
+            }
         }
     </style>
 </head>
@@ -196,6 +251,12 @@ if (isset($_GET['semester'])) {
             </div>
         </form>
     </div>
+
+    <!-- Floating Help Button -->
+    <button class="floating-help-btn" onclick="window.location.href='../docs/docs_for_teacher.php'">
+        How to Use? <span style="font-weight: bold;"></span>
+    </button>
+
     <script>
         // Global list of days: Monday to Friday only
         const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];

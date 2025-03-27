@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     exit;
 }
 
+
 // ----- Branch 2: Delete a Specific Teaching Plan Entry -----
 if ($_SERVER['REQUEST_METHOD'] === 'POST' 
     && isset($_POST['action']) 
@@ -71,11 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             exit;
         }
 
-        // Debug: Check for matching rows using the given criteria
+        // Debug: Check for matching rows using the given criteria in teaching_plan
         $selectStmt = $pdo->prepare("SELECT * FROM teaching_plan WHERE sem_id = ? AND subject = ? AND division = ?");
         $selectStmt->execute([$semester, $subjectName, $division]);
         $matchingRows = $selectStmt->fetchAll(PDO::FETCH_ASSOC);
-        error_log("Matching rows for the given criteria:\n" . print_r($matchingRows, true));
+        error_log("Matching rows for the given criteria in teaching_plan:\n" . print_r($matchingRows, true));
 
         // If no matching rows are found, log all rows from the table for inspection
         if (count($matchingRows) === 0) {
@@ -84,26 +85,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             error_log("All rows in teaching_plan table:\n" . print_r($allRows, true));
         }
 
-        // Proceed with deletion using the subject name from subject_table
+        // Start a transaction to ensure both deletions succeed or fail together
+        $pdo->beginTransaction();
+
+        // Step 1: Delete from teaching_plan
         $stmt = $pdo->prepare("DELETE FROM teaching_plan WHERE sem_id = ? AND subject = ? AND division = ?");
         $stmt->execute([$semester, $subjectName, $division]);
-        $affectedRows = $stmt->rowCount();
-        error_log("Number of rows deleted from teaching_plan: " . $affectedRows);
+        $affectedRowsTeachingPlan = $stmt->rowCount();
+        error_log("Number of rows deleted from teaching_plan: " . $affectedRowsTeachingPlan);
 
-        if ($affectedRows > 0) {
+        // Step 2: Delete from reference_table using sub_id 
+        $stmtRef = $pdo->prepare("DELETE FROM reference_table WHERE sub_id = ? AND division = ?");
+        $stmtRef->execute([$subjectId, $division]);
+        $affectedRowsReference = $stmtRef->rowCount();
+        error_log("Number of rows deleted from reference_table: " . $affectedRowsReference);
+
+        // Commit the transaction
+        $pdo->commit();
+
+        if ($affectedRowsTeachingPlan > 0 || $affectedRowsReference > 0) {
             error_log("Deletion successful for: sem_id=[$semester], subject=[$subjectName], division=[$division]");
             echo json_encode([
                 'status'  => 'success',
-                'message' => "Successfully deleted the teaching plan entry. Rows deleted: $affectedRows"
+                'message' => "Successfully deleted the teaching plan entry. Rows deleted from teaching_plan: $affectedRowsTeachingPlan, from reference_table: $affectedRowsReference"
             ]);
         } else {
-            error_log("Deletion executed but no matching entry was found to delete.");
+            error_log("Deletion executed but no matching entry was found to delete in either table.");
             echo json_encode([
                 'status'  => 'info',
-                'message' => "No matching teaching plan entry found to delete."
+                'message' => "No matching entries found to delete in teaching_plan or reference_table."
             ]);
         }
     } catch (PDOException $e) {
+        // Roll back the transaction on error
+        $pdo->rollBack();
         error_log("Error deleting teaching plan entry: " . $e->getMessage());
         echo json_encode([
             'status'  => 'error',
@@ -112,7 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     }
     exit;
 }
-
 
 
 // ----- Branch X: Delete ALL Teaching Plan Entries -----
@@ -124,17 +138,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     error_log("Delete ALL teaching plan entries action triggered.");
 
     try {
-        // Execute a DELETE query to remove all rows from teaching_plan table
+        // Start a transaction to ensure both deletions succeed or fail together
+        $pdo->beginTransaction();
+
+        // Step 1: Delete all rows from teaching_plan table
         $stmt = $pdo->prepare("DELETE FROM teaching_plan");
         $stmt->execute();
-        $affectedRows = $stmt->rowCount();
-        error_log("Number of rows deleted from teaching_plan: " . $affectedRows);
+        $affectedRowsTeachingPlan = $stmt->rowCount();
+        error_log("Number of rows deleted from teaching_plan: " . $affectedRowsTeachingPlan);
+
+        // Step 2: Delete all rows from reference_table
+        $stmtRef = $pdo->prepare("DELETE FROM reference_table");
+        $stmtRef->execute();
+        $affectedRowsReference = $stmtRef->rowCount();
+        error_log("Number of rows deleted from reference_table: " . $affectedRowsReference);
+
+        // Commit the transaction
+        $pdo->commit();
 
         echo json_encode([
             'status'  => 'success',
-            'message' => "All teaching plan entries have been deleted successfully. Rows deleted: $affectedRows"
+            'message' => "All teaching plan entries have been deleted successfully. Rows deleted from teaching_plan: $affectedRowsTeachingPlan, from reference_table: $affectedRowsReference"
         ]);
     } catch (PDOException $e) {
+        // Roll back the transaction on error
+        $pdo->rollBack();
         error_log("Error deleting all teaching plan entries: " . $e->getMessage());
         echo json_encode([
             'status'  => 'error',
@@ -143,7 +171,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     }
     exit;
 }
-
 
 
 // ----- Branch 3: CSV Upload/Inserting Teaching Dates -----

@@ -165,6 +165,18 @@ if (isset($_GET['semester'])) {
             margin: 0 auto;
         }
 
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            flex: 1;
+            padding: 10px;
+            width: auto;
+        }
+
         @media (max-width: 768px) {
             .main-wrapper {
                 flex-direction: column; /* Stack containers vertically on smaller screens */
@@ -192,6 +204,10 @@ if (isset($_GET['semester'])) {
                 padding: 6px 10px; /* Smaller padding for smaller screens */
                 font-size: 0.8em; /* Smaller font size for smaller screens */
             }
+
+            .button-group {
+                flex-direction: column;
+            }
         }
 
         @media (max-width: 480px) {
@@ -217,6 +233,32 @@ if (isset($_GET['semester'])) {
                 padding: 5px 8px; /* Smaller padding for smaller screens */
                 font-size: 0.7em; /* Smaller font size for smaller screens */
             }
+        }
+
+
+        .help-btn{
+            background: linear-gradient(45deg,rgb(46, 46, 111),rgb(45, 97, 240), #0f3460,rgb(51, 141, 251));
+            background-size: 300% 300%;
+            font:bolder; 
+            animation: gradientBG 8s ease infinite, 
+                       initialPulse 3s ease 1,
+                       pulse 2s ease infinite 3s;
+            transition: all 0.3s ease;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes initialPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 109, 216, 0.7); }
+            50% { transform: scale(1.2); box-shadow: 0 0 0 15px rgba(56, 109, 216, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 109, 216, 0); }
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 174, 239, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 174, 239, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 174, 239, 0); }
         }
     </style>
 </head>
@@ -248,7 +290,15 @@ if (isset($_GET['semester'])) {
             <label for="exclude_dates">Non Teaching Dates (.csv):</label>
             <input type="file" id="exclude_dates" name="exclude_dates" accept=".csv" required>
 
-            <br><br>
+            <!-- New button group -->
+            <div class="button-group">
+                <button type="button" onclick="downloadCSVTemplate()" style="background-color: #28a745;">
+                    Download CSV Template
+                </button>
+                <button type="button" class="help-btn" onclick="window.location.href='../docs/docs_for_admin.php'">
+                    How to Use? <span style="font-weight: bold;">?</span>
+                </button>
+            </div>
 
             <button type="submit">Submit</button>
         </form>
@@ -325,7 +375,7 @@ if (isset($_GET['semester'])) {
                     Delete All
                 </button>
                 <button type="button" 
-                        style="background-color: #ffc107; padding: 10px 20px; width: 100%;"
+                        style="background-color:rgb(255, 198, 29); padding: 10px 20px; width: 100%;"
                         onclick="handleDeleteNonTeachingDates()">
                     Delete Non Teaching Dates
                 </button>
@@ -335,6 +385,31 @@ if (isset($_GET['semester'])) {
 </div>
 
 <script>
+
+
+// Function to download CSV template
+function downloadCSVTemplate() {
+    // Create CSV content with semesters in a single cell
+    const csvContent = "date (DD-MM-YYYY),reason,semesters\n" +
+                      "26-01-2023,Republic Day,\"ALL\"\n" +
+                      "15-08-2023,Independence Day,\"ALL\"\n" +
+                      "02-10-2023,Gandhi Jayanti,\"ALL\"\n" +
+                      "25-12-2023,Christmas,\"ALL\"\n" +
+                      "01-05-2023,Labour Day,\"3,4,5\"\n" +
+                      "10-09-2023,College Event,\"6,7\"";
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'non_teaching_dates_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+
 function handleDeleteNonTeachingDates() {
     if (confirm('Are you sure you want to delete all non-teaching dates?')) {
         fetch('adminLogic.php', {
@@ -355,82 +430,65 @@ function handleDeleteNonTeachingDates() {
     }
 }
 
+// Function to submit the form to toggle.php
+function submitFormToToggle() {
+    var form = document.getElementById('adminForm');
+    form.action = 'toggle.php'; // Set the action to toggle.php
+    form.submit(); // Submit the form
+}
 
+// Reset form action when Submit button is clicked
+document.querySelector('button[type="submit"]').addEventListener('click', function () {
+    var form = document.getElementById('adminForm');
+    form.action = 'adminLogic.php'; // Reset the action to adminLogic.php
+});
 
-
-
-    // Function to submit the form to toggle.php
-    function submitFormToToggle() {
-        var form = document.getElementById('adminForm');
-        form.action = 'toggle.php'; // Set the action to toggle.php
-        form.submit(); // Submit the form
-    }
-
-    // Reset form action when Submit button is clicked
-    document.querySelector('button[type="submit"]').addEventListener('click', function () {
-        var form = document.getElementById('adminForm');
-        form.action = 'adminLogic.php'; // Reset the action to adminLogic.php
-    });
-
-    // Fetch Subjects for Control Section
-    document.getElementById('control_sem').addEventListener('change', function() {
-        const selectedSemester = this.value;
-        const subjectDropdown = document.getElementById('control_subject');
-        
-        if (selectedSemester) {
-            fetch(`?semester=${selectedSemester}`)
-                .then(response => response.json())
-                .then(data => {
-                    subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
-                    data.forEach(subject => {
-                        const option = document.createElement("option");
-                        option.value = subject.sub_id;
-                        option.textContent = subject.sub;
-                        subjectDropdown.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching subjects:", error);
+// Fetch Subjects for Control Section
+document.getElementById('control_sem').addEventListener('change', function() {
+    const selectedSemester = this.value;
+    const subjectDropdown = document.getElementById('control_subject');
+    
+    if (selectedSemester) {
+        fetch(`?semester=${selectedSemester}`)
+            .then(response => response.json())
+            .then(data => {
+                subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
+                data.forEach(subject => {
+                    const option = document.createElement("option");
+                    option.value = subject.sub_id;
+                    option.textContent = subject.sub;
+                    subjectDropdown.appendChild(option);
                 });
-        } else {
-            subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
-        }
-    });
+            })
+            .catch(error => {
+                console.error("Error fetching subjects:", error);
+            });
+    } else {
+        subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
+    }
+});
 
-    function handleDelete() {
+function handleDelete() {
     const semester = document.getElementById('control_sem').value;
     const subject = document.getElementById('control_subject').value;
     const division = document.getElementById('control_division').value;
-    
-    // Log the parameters on the client side
-    console.log("Attempting to delete entry with parameters:", { semester, subject, division });
     
     if (!semester || !subject || !division) {
         alert('Please select all fields before deleting');
         return;
     }
     
-    if (confirm('Are you sure you want to delete this teaching plan entry?')) {
-        // Build the URL-encoded parameters
-        const params = new URLSearchParams();
-        params.append("action", "delete_teaching_plan");
-        params.append("semester", semester);
-        params.append("subject", subject);
-        params.append("division", division);
-        
-        console.log("Sending request with parameters:", params.toString());
-        
+    if (confirm('Are you sure you want to delete this teaching plan and reference table entry?')) {
         fetch('adminLogic.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: params.toString()
+            body: `action=delete_teaching_plan&semester=${semester}&subject=${subject}&division=${division}`
         })
         .then(response => response.json())
         .then(data => {
             alert(data.message);
-            console.log("Server response:", data);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -439,43 +497,23 @@ function handleDeleteNonTeachingDates() {
 }
 
 function handleDeleteAll() {
-    if (confirm('Are you sure you want to delete ALL teaching plan entries?')) {
-        console.log("Sending request to delete all teaching plan entries.");
-        fetch('adminLogic.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=delete_all_teaching_plan'
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-            console.log("Server response:", data);
-        })
-        .catch(error => console.error('Error:', error));
-    }
-}
-
-function handleDeleteNonTeachingDates() {
-    if (confirm('Are you sure you want to delete all non-teaching dates?')) {
-        console.log("Sending request to delete all non-teaching dates.");
+    if (confirm('Are you sure you want to delete ALL teaching plan and reference table entries ?')) {
         fetch('adminLogic.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: 'action=delete_non_teaching_dates'
+            body: 'action=delete_all_teaching_plan'
         })
         .then(response => response.json())
         .then(data => {
             alert(data.message);
-            console.log("Server response:", data);
         })
         .catch(error => {
             console.error('Error:', error);
         });
     }
 }
-
 </script>
 
 </body>
