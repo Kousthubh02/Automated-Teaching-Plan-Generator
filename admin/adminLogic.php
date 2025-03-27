@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     exit;
 }
 
-// ----- Branch X: Delete ALL Teaching Plan Entries -----
+// ----- Branch 3: Delete ALL Teaching Plan Entries -----
 if ($_SERVER['REQUEST_METHOD'] === 'POST' 
     && isset($_POST['action']) 
     && $_POST['action'] === 'delete_all_teaching_plan'
@@ -170,7 +170,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     exit;
 }
 
-// ----- Branch 3: CSV Upload/Inserting Teaching Dates -----
+// ----- Branch 4: Toggle Lock Teaching Dates -----
+if ($_SERVER['REQUEST_METHOD'] === 'POST' 
+    && isset($_POST['action']) 
+    && $_POST['action'] === 'toggle_lock_teaching_plan'
+) {
+    try {
+        // Fetch the current editable value
+        $sql = "SELECT editable FROM settings WHERE id = 1";
+        $stmt = $pdo->query($sql);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // In adminLogic.php (toggle_lock_teaching_plan branch)
+        if ($row) {
+            $currentValue = $row['editable'];
+            $newValue = $currentValue == 1 ? 0 : 1;
+            
+            $updateSql = "UPDATE settings SET editable = :newValue WHERE id = 1";
+            $updateStmt = $pdo->prepare($updateSql);
+            $updateStmt->execute(['newValue' => $newValue]);
+            
+            // Return JSON instead of redirecting
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'success',
+                'newValue' => $newValue,
+                'message' => 'Editable status updated'
+            ]);
+            exit;
+        } else {
+            die("No record found with id = 1");
+        }
+    } catch (PDOException $e) {
+        die("Error updating record: " . $e->getMessage());
+    }
+}
+
+// ----- Branch 5: CSV Upload/Inserting Teaching Dates -----
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $start_date = $_POST['start_date'] ?? null;
     $end_date   = $_POST['end_date'] ?? null;

@@ -432,16 +432,35 @@ function handleDeleteNonTeachingDates() {
 
 // Function to submit the form to toggle.php
 function submitFormToToggle() {
-    var form = document.getElementById('adminForm');
-    form.action = 'toggle.php'; // Set the action to toggle.php
-    form.submit(); // Submit the form
+    fetch('adminLogic.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `action=toggle_lock_teaching_plan`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update the status display without page reload
+            const statusDiv = document.querySelector('.message');
+            const isEditable = data.newValue == 1;
+            
+            statusDiv.textContent = `Current Editable Status: ${isEditable ? "Editable" : "Not Editable"}`;
+            statusDiv.className = isEditable ? "message editable" : "message not-editable";
+            
+            // Optional: Show a brief confirmation
+            //alert('Editable status updated successfully');
+        } else {
+            alert('Error updating status');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error toggling editable status');
+    });
 }
 
-// Reset form action when Submit button is clicked
-document.querySelector('button[type="submit"]').addEventListener('click', function () {
-    var form = document.getElementById('adminForm');
-    form.action = 'adminLogic.php'; // Reset the action to adminLogic.php
-});
 
 // Fetch Subjects for Control Section
 document.getElementById('control_sem').addEventListener('change', function() {
