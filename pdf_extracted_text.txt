@@ -1,0 +1,384 @@
+￼  
+Agnel Charities’ 
+Fr. C. Rodrigues Institute of Technology, Vashi, Navi-Mumbai 
+ 
+     T-3 
+ 
+Department of Computer Engineering
+Course Teaching Plan
+Course Code and Name: CSDC8013: Applied Data Science	Academic Year: FH-2025
+Name of the Faculty: Mrs.Vidya Roshan Kottari	Branch and Semester: Comp-VIII(  )
+Lect. 
+No.
+Proposed 
+Date
+Content to be covered
+Actual 
+Date
+Content not 
+covered as 
+per the plan
+ReferenceMethodology
+Mapping 
+to CO
+Remarks by 
+Faculty with 
+Sign
+Verified by 
+HOD 
+1
+13/01/25
+Discussion CO-PO-PSO-Tool-Course 
+content, Introduction to Data Science
+T1 PPTs CO1
+2
+13/01/25
+Module No: -1  
+Introduction to Data Science 
+Data Science Process,
+T1, T4 PPTs CO1
+3
+14/01/25
+Motivation to use Data Science 
+Techniques: Volume, Dimensions and 
+Complexity. Data Science Tasks and 
+Examples
+T1, T4 PPTs CO1
+4
+16/01/25
+Overview of Data Preparation, 
+Modeling, Difference between data 
+science and data analytics
+T1 PPTs CO1
+5 17/01/25Revision
+FCRIT- IQAC/TP/01_07_23/Ver.2                                                                                                                     ￼ | Page 1
+
+￼  
+Agnel Charities’ 
+Fr. C. Rodrigues Institute of Technology, Vashi, Navi-Mumbai 
+ 
+     T-3 
+ 
+6
+20/01/25
+Module No: -2  
+Data Exploration 
+Types of data, Properties of data
+T4, R3, R4 PPTs CO2
+7
+21/01/25
+Descriptive Statistics: Univariate 
+Exploration: Measure of Central 
+Tendency
+T4, R3, R4
+PPTs, 
+Chalk & Board
+CO2
+8
+24/01/25
+Measure of Spread Symmetry, 
+Skewness: Karl Pearson Coefficient of 
+skewness
+T4, R3, R4
+PPTs, 
+Chalk & Board
+CO2
+9
+27/01/25
+Bowley ‘s Coefficient, Kurtosis 
+T4, R3, R4
+PPTs, 
+Chalk & Board
+CO2
+10
+28/01/25
+Multivariate Exploration: Central Data 
+Point, Correlation, Different forms of 
+correlation
+T4, R3, R4
+PPTs, 
+Chalk & Board
+CO2
+11
+31/01/25
+Karl Pearson Correlation Coefficient for 
+bivariate
+T4, R3, R4
+PPTs, 
+Chalk & Board
+CO2
+12
+03/02/25
+Inferential Statistics: Overview of 
+Various forms of distributions: Normal
+T4, R3, A4
+PPTs, 
+Chalk & Board
+CO2
+13
+04/02/25
+Poisson distribution, Test Hypothesis, 
+Central limit theorem
+T4, R3, A4
+PPTs, 
+Chalk & Board
+CO2
+14 
+07/02/25
+Confidence Interval	T4, R3, A4
+PPTs, 
+Chalk & Board
+CO2
+FCRIT- IQAC/TP/01_07_23/Ver.2                                                                                                                     ￼ | Page 2
+
+￼  
+Agnel Charities’ 
+Fr. C. Rodrigues Institute of Technology, Vashi, Navi-Mumbai 
+ 
+     T-3 
+ 
+15
+10/02/25
+Z-test	T4, R3, A4
+PPTs, 
+Chalk & Board
+CO2
+16 
+11/02/25
+ t-test, Type-I, Type-II Errors,	T4, R3, A4
+PPTs, 
+Chalk & Board
+CO2
+14/02/25	ETAMAX
+17
+17/02/25
+ANOVA	T4, R3, A4
+PPTs, 
+Chalk & Board
+CO2
+18
+18/02/25
+ANOVA	T4, R3, A4
+PPTs, 
+Chalk & Board
+CO2
+19 21/02/25Revision
+20 24/02/25Assignment Test-1
+21
+25/02/25
+Module No:-3 
+Methodology & Data Visualization 
+Methodology: Overview of model 
+building, Cross Validation, K-fold cross 
+validation, leave-1 out, Bootstrapping
+T1, T4 PPTs CO3
+28/02/25	IA1
+22
+03/03/25
+Data Visualization Univariate 
+Visualization: Histogram, Quartile, 
+Distribution Chart
+T1, T4 PPTs CO3
+23
+04/03/25
+Multivariate Visualization: Scatter Plot, 
+Scatter Matrix, Bubble chart, Density 
+Chart Roadmap for Data Exploration
+T1, T4 PPTs CO3
+FCRIT- IQAC/TP/01_07_23/Ver.2                                                                                                                     ￼ | Page 3
+
+￼  
+Agnel Charities’ 
+Fr. C. Rodrigues Institute of Technology, Vashi, Navi-Mumbai 
+ 
+     T-3 
+ 
+24
+07/03/25
+Visualizing high dimensional data: 
+Parallel chart, Deviation chart, Andrews 
+Curves.
+ 	T1, T4 PPTs CO3
+25 10/03/25Revision
+26
+11/03/25
+Module No: -4 
+Anomaly Detection 
+Outliers, Causes of Outliers, Anomaly 
+detection techniques,
+T1, T4 PPTs CO4
+14/03/25	Holi
+27 17/03/25Outlier Detection using Statistics	T1, T4 PPTs CO4
+28
+18/03/25
+Outlier Detection using Distance based 
+method,
+T1, T4 PPTs CO4
+29
+21/03/25
+Outlier detection using density-based 
+methods, SMOTE
+T1, T4 PPTs CO4
+30
+24/03/25
+Module No: -5 
+Time Series Forecasting 
+Taxonomy of Time Series Forecasting 
+methods, Time Series Decomposition 
+T1, T4 PPTs CO5
+31
+25/03/25
+Smoothening Methods: Average 
+method, Moving Average smoothing,
+R3,R4 Chalk & boardCO5
+32
+28/03/25
+Time series analysis using linear 
+regression, 
+T1, T4 PPTs CO5
+31/03/25	Ramjan-Eid
+33 01/04/25ARIMA,	R3,R4 Chalk & boardCO5
+FCRIT- IQAC/TP/01_07_23/Ver.2                                                                                                                     ￼ | Page 4
+
+￼  
+Agnel Charities’ 
+Fr. C. Rodrigues Institute of Technology, Vashi, Navi-Mumbai 
+ 
+     T-3 
+ 
+34
+04/04/25
+Performance Evaluation: Mean Absolute 
+Error, Root Mean Square Error, Mean 
+Absolute Percentage Error, Mean 
+Absolute Scaled Error Absolute Scaled 
+Error
+ETAMAX
+ETAMAX
+35
+07/04/25
+Evaluation parameters for 
+Classification, regression, and 
+clustering.
+R3,R4 Chalk & boardCO5
+36 08/04/25Assignment Test-1
+37 11/04/25Revision 
+14/04/25	Ambedkar Jayanti
+38
+15/04/25
+Module no: -6 
+Application of Data Science 
+Application of Data Science 
+Predictive Modeling: House price 
+prediction, Fraud Detection
+T1, T4 PPTs CO6
+18/04/25	Good-Friday
+39
+21/04/25
+Clustering: Customer Segmentation 
+Time series forecasting: Weather 
+Forecasting, Recommendation engines: 
+Product recommendation
+T1, T4 PPTs CO6
+22/4/25	IA2
+40 25/04/25Revision
+FCRIT- IQAC/TP/01_07_23/Ver.2                                                                                                                     ￼ | Page 5
+
+￼  
+Agnel Charities’ 
+Fr. C. Rodrigues Institute of Technology, Vashi, Navi-Mumbai 
+ 
+     T-3 
+ 
+References: 
+Non-Adherence to the Teaching Plan  
+  
+1	2	3	4
+Text Books:	T1- 
+Vijay Kotu, Bala Deshpande. 
+―Data Science Concepts 
+and Practice‖, Elsevier, M.K. 
+Publishers.
+T2- 
+Steven Skiena, ― Data 
+Science Design Manual‖, 
+Springer International 
+Publishing AG
+T3- 
+Samir Madhavan. 
+―Mastering Python for 
+Data Science‖, PACKT 
+Publishing
+T4- 
+Dr. P. N. Arora, Sumeet Arora, 
+S. Arora, Ameet Arora, 
+―Comprehensive Statistical 
+Methods‖, S.Chand 
+Publications, New Delhi.
+Reference Books R1- 
+Jake VanderPlas. ―	Python 
+Data Science Handbook‖, 
+O‘reilly Publications.
+R2- 
+Francesco Ricci, LiorRokach, 
+BrachaShapira, Paul B. 
+Kantor, ― Recommender 
+Systems Handbook‖, 
+Springer.
+R3- 
+S.C. Gupta, V. K. Kapoor 
+―Fundamentals of 
+Mathematical Statistics‖, S. 
+Chand and Sons, New Delhi.
+R4- 
+B. L. Agrawal. ― Basic 
+Statistics‖, New Age 
+Publications, Delhi.
+Any other Material 
+(Specify) :
+A1- 
+Analyticvidhya.com/Data 
+science
+A2- 
+Coursera.org/Statistics
+A3- 
+SWAYAM Courses
+A-4 
+Probability & Statistics 
+TVK Iyengar, Krishnan 
+Gandhi
+FCRIT- IQAC/TP/01_07_23/Ver.2                                                                                                                     ￼ | Page 6
+
+￼  
+Agnel Charities’ 
+Fr. C. Rodrigues Institute of Technology, Vashi, Navi-Mumbai 
+ 
+     T-3 
+ 
+￼ 
+       
+￼ 
+  
+Sr. No. Lecture No.	Planned Content Content not 
+covered as per the 
+plan
+Justification 
+  
+ 1
+    
+  
+ 2
+    
+  
+ 3
+    
+  
+ 4
+    
+The percentage Adherence=1− 
+Number of lectures in which the content is not covered as per the plan 
+Total number of lectures
+The percentage Adherence=−−−−−−−−−−−−−−−−−−
+Signature of Course Coordinator	Head of the Department  
+Department of Computer Engg. 
+FCRIT- IQAC/TP/01_07_23/Ver.2                                                                                                                     ￼ | Page 7
