@@ -22,21 +22,22 @@ $message = '';
 $plans = [];
 $editable = 0; // Default editable status
 $excludeDatesArray = [];  // Will hold dates (in Y-m-d format) that are marked as excluded
+$missing_content = ''; // Initialize missing content variable
 
 // Check if a subject is set via GET request
 if ($subject !== 'Unknown') {
   try {
     // Get teaching plans for the selected subject and division
     $sql = "SELECT pk, proposed_date, content, actual_date, content_not_covered, 
-                     reference, methodology, co_mapping, verified_by_hod, isNTD
+                     reference, methodology, co_mapping, verified_by_hod, isNTD, sem_id
               FROM teaching_plan 
               WHERE subject = :subject 
-              AND (division = :division OR division = 'NONE')";  // Division filter added
+              AND (division = :division OR division = 'NONE')";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
       'subject' => $subject,
-      'division' => $division  // Added division parameter
+      'division' => $division
     ]);
 
     $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -47,7 +48,7 @@ if ($subject !== 'Unknown') {
     $message = 'Error fetching data: ' . $e->getMessage();
   }
 
-  // Get editable status (existing code remains same)
+  // Get editable status
   try {
     $sql = "SELECT editable FROM settings WHERE id = 1";
     $stmt = $pdo->query($sql);
@@ -56,7 +57,7 @@ if ($subject !== 'Unknown') {
     $message = 'Error fetching editable status: ' . $e->getMessage();
   }
 
-  // Fetch exclude dates (existing code remains same)
+  // Fetch exclude dates
   try {
     $sql = "SELECT exclude_dates FROM teaching_dates WHERE subject = :subject LIMIT 1";
     $stmt = $pdo->prepare($sql);
@@ -76,11 +77,30 @@ if ($subject !== 'Unknown') {
   } catch (PDOException $e) {
     // Error handling remains same
   }
+
+  // Fetch missing content if we have plans
+  if (!empty($plans)) {
+    try {
+      $sem_id = $plans[0]['sem_id'];
+      $missing_sql = "SELECT missingcontent FROM missing_content_table 
+                     WHERE subject = :subject 
+                     AND division = :division 
+                     AND sem_id = :sem_id";
+      $missing_stmt = $pdo->prepare($missing_sql);
+      $missing_stmt->execute([
+        ':subject' => $subject,
+        ':division' => $division,
+        ':sem_id' => $sem_id
+      ]);
+      $missing_row = $missing_stmt->fetch(PDO::FETCH_ASSOC);
+      $missing_content = $missing_row['missingcontent'] ?? '';
+    } catch (PDOException $e) {
+      // Silence error, just leave missing_content empty
+    }
+  }
 } else {
   $message = 'Please select a subject.';
 }
-
-
 
 // Handle form submission (Save data) via AJAX or normal POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -132,68 +152,118 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
   }
 
+  // --- 2. Process Subject References Update ---
+  if (isset($_POST['subject_references'])) {
+    if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
+        die("Invalid subject ID");
+    }
+    $sub_id_post = filter_input(INPUT_POST, 'sub_id', FILTER_VALIDATE_INT);
+    try {
+        // Loop over each reference submitted (this includes both references and textbooks)
+        foreach ($_POST['subject_references'] as $ref_code => $ref_content) {
+            $ref_content = trim($ref_content);
+            $ref_content = ($ref_content === '') ? null : $ref_content;
 
+            // Check if a row already exists for this sub_id, division, and ref_code
+            $checkSql = "SELECT COUNT(*) FROM reference_table 
+                         WHERE sub_id = :sub_id 
+                         AND division = :division 
+                         AND ref_code = :ref_code";
+            $checkStmt = $pdo->prepare($checkSql);
+            $checkStmt->execute([
+                ':sub_id'   => $sub_id_post,
+                ':division' => $division,
+                ':ref_code' => $ref_code
+            ]);
+            $rowCount = $checkStmt->fetchColumn();
 
-// --- 2. Process Subject References Update ---
-if (isset($_POST['subject_references'])) {
-  if (!isset($_POST['sub_id']) || !filter_var($_POST['sub_id'], FILTER_VALIDATE_INT)) {
-      die("Invalid subject ID");
+            // If no row exists, insert the data
+            if ($rowCount == 0) {
+                $insertSql = "INSERT INTO reference_table (sub_id, division, ref_code, ref_content)
+                               VALUES (:sub_id, :division, :ref_code, :ref_content)";
+                $insertStmt = $pdo->prepare($insertSql);
+                $insertStmt->execute([
+                    ':sub_id'     => $sub_id_post,
+                    ':division'   => $division,
+                    ':ref_code'   => $ref_code,
+                    ':ref_content'=> $ref_content
+                ]);
+            } else {
+                // If a row exists, update the data
+                $updateSql = "UPDATE reference_table 
+                               SET ref_content = :ref_content 
+                               WHERE sub_id = :sub_id 
+                               AND division = :division 
+                               AND ref_code = :ref_code";
+                $updateStmt = $pdo->prepare($updateSql);
+                $updateStmt->execute([
+                    ':sub_id'     => $sub_id_post,
+                    ':division'   => $division,
+                    ':ref_code'   => $ref_code,
+                    ':ref_content'=> $ref_content
+                ]);
+            }
+        }
+        $message .= ' References updated successfully.';
+    } catch (PDOException $e) {
+        $message .= ' Error updating references: ' . $e->getMessage();
+    }
   }
-  $sub_id_post = filter_input(INPUT_POST, 'sub_id', FILTER_VALIDATE_INT);
-  try {
-      // Loop over each reference submitted (this includes both references and textbooks)
-      foreach ($_POST['subject_references'] as $ref_code => $ref_content) {
-          $ref_content = trim($ref_content);
-          $ref_content = ($ref_content === '') ? null : $ref_content;
 
-          // Check if a row already exists for this sub_id, division, and ref_code
-          $checkSql = "SELECT COUNT(*) FROM reference_table 
-                       WHERE sub_id = :sub_id 
-                       AND division = :division 
-                       AND ref_code = :ref_code";
-          $checkStmt = $pdo->prepare($checkSql);
-          $checkStmt->execute([
-              ':sub_id'   => $sub_id_post,
-              ':division' => $division,
-              ':ref_code' => $ref_code
-          ]);
-          $rowCount = $checkStmt->fetchColumn();
+  // --- 3. Process Missing Content Update ---
+  if (isset($_POST['missing_content'])) {
+    try {
+        // Get sem_id from existing teaching plans
+        $sem_id = null;
+        if (!empty($plans)) {
+            $sem_id = $plans[0]['sem_id'];
+        }
 
-          // If no row exists, insert the data
-          if ($rowCount == 0) {
-              $insertSql = "INSERT INTO reference_table (sub_id, division, ref_code, ref_content)
-                             VALUES (:sub_id, :division, :ref_code, :ref_content)";
-              $insertStmt = $pdo->prepare($insertSql);
-              $insertStmt->execute([
-                  ':sub_id'     => $sub_id_post,
-                  ':division'   => $division,
-                  ':ref_code'   => $ref_code,
-                  ':ref_content'=> $ref_content
-              ]);
-          } else {
-              // If a row exists, update the data
-              $updateSql = "UPDATE reference_table 
-                             SET ref_content = :ref_content 
-                             WHERE sub_id = :sub_id 
-                             AND division = :division 
-                             AND ref_code = :ref_code";
-              $updateStmt = $pdo->prepare($updateSql);
-              $updateStmt->execute([
-                  ':sub_id'     => $sub_id_post,
-                  ':division'   => $division,
-                  ':ref_code'   => $ref_code,
-                  ':ref_content'=> $ref_content
-              ]);
-          }
-      }
-      $message .= ' References updated successfully.';
-  } catch (PDOException $e) {
-      $message .= ' Error updating references: ' . $e->getMessage();
+        if ($sem_id) {
+            $missing_content = trim($_POST['missing_content']) ?? '';
+            
+            // First try to update
+            $update_stmt = $pdo->prepare("
+                UPDATE missing_content_table 
+                SET missingcontent = :missingcontent
+                WHERE sem_id = :sem_id 
+                AND division = :division 
+                AND subject = :subject
+            ");
+            
+            $update_stmt->execute([
+                ':missingcontent' => $missing_content,
+                ':sem_id' => $sem_id,
+                ':division' => $division,
+                ':subject' => $subject
+            ]);
+            
+            // If no rows were updated, insert new
+            if ($update_stmt->rowCount() === 0) {
+                $insert_stmt = $pdo->prepare("
+                    INSERT INTO missing_content_table 
+                    (dept_id, sem_id, division, subject, missingcontent) 
+                    VALUES 
+                    (:dept_id, :sem_id, :division, :subject, :missingcontent)
+                ");
+                
+                // Get dept_id from first existing record if available
+                $dept_id = !empty($existing_records) ? $existing_records[0]['dept_id'] : null;
+                
+                $insert_stmt->execute([
+                    ':dept_id' => $dept_id,
+                    ':sem_id' => $sem_id,
+                    ':division' => $division,
+                    ':subject' => $subject,
+                    ':missingcontent' => $missing_content
+                ]);
+            }
+            $message .= ' Missing content updated successfully.';
+        }
+    } catch (PDOException $e) {
+        $message .= ' Error updating missing content: ' . $e->getMessage();
+    }
   }
-}
-
-
-
 
   // Return response based on the request type (AJAX or normal)
   if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -206,8 +276,6 @@ if (isset($_POST['subject_references'])) {
   }
 }
 
-
-
 // Fetch existing subject references so that the form can be pre-filled
 try {
   $sql = "SELECT ref_code, ref_content FROM reference_table WHERE sub_id = :sub_id AND division = :division";
@@ -215,7 +283,6 @@ try {
   $stmt->execute([
     ':sub_id' => $subject_id,
     ':division' => $division
-  
   ]);
   $references = $stmt->fetchAll(PDO::FETCH_KEY_PAIR) ?? [];
 } catch (PDOException $e) {
@@ -509,130 +576,125 @@ $totalLectures = count($plans);
         <th>Verified by HOD</th>
       </tr>
 
-
-   <?php foreach ($plans as $plan): ?>
-  <?php
-  // If the proposed_date is empty, in the exclude dates list, or flagged as NTD, render a grey row without a lecture number.
-  if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
-    $lectureNumberCell = '';
-    $rowClass = 'grey-row';
-    $inputClass = 'grey-input';
-  } else {
-    $lectureNumberCell = $lectureNumber++;
-    $rowClass = '';
-    $inputClass = '';
-  }
-  // Determine if fields should be editable based on both $editable and isNTD
-  $isEditable = ($editable == 1 && $plan['isNTD'] != 1);
-  ?>
-  <tr class="<?= $rowClass ?>">
-    <td class="empty-lecture"><?= $lectureNumberCell ?></td>
-    <td>
-      <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]"
-        value="<?= htmlspecialchars($plan['proposed_date']) ?>">
+      <?php foreach ($plans as $plan): ?>
       <?php
-      // Format date from Y-m-d to d-m-Y (if possible)
-      $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
-      echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
+      // If the proposed_date is empty, in the exclude dates list, or flagged as NTD, render a grey row without a lecture number.
+      if (empty($plan['proposed_date']) || in_array($plan['proposed_date'], $excludeDatesArray) || $plan['isNTD'] == 1) {
+        $lectureNumberCell = '';
+        $rowClass = 'grey-row';
+        $inputClass = 'grey-input';
+      } else {
+        $lectureNumberCell = $lectureNumber++;
+        $rowClass = '';
+        $inputClass = '';
+      }
+      // Determine if fields should be editable based on both $editable and isNTD
+      $isEditable = ($editable == 1 && $plan['isNTD'] != 1);
       ?>
-    </td>
-    <td>
-      <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
-        placeholder="Enter content" <?= $isEditable ? '' : 'readonly' ?>
-        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
-        onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
-    </td>
-    <td></td>
-    <td>
-      <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
-        placeholder="Enter content not covered" 
-        oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
-        onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
-    </td>
-    <td>
-      <table>
-        <tr>
-          <th></th>
-          <?php for ($i = 1; $i <= 5; $i++): ?>
-            <th><?= $i ?></th>
-          <?php endfor; ?>
-        </tr>
-        <tr>
-          <td>Textbook</td>
-          <?php for ($i = 1; $i <= 5; $i++): ?>
-            <td>
-              <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="T<?= $i ?>"
-                <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
-                <?= $isEditable ? '' : 'disabled' ?>>
-              T<?= $i ?>
-            </td>
-          <?php endfor; ?>
-        </tr>
-        <tr>
-          <td>References</td>
-          <?php for ($i = 1; $i <= 5; $i++): ?>
-            <td>
-              <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="R<?= $i ?>"
-                <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
-                <?= $isEditable ? '' : 'disabled' ?>>
-              R<?= $i ?>
-            </td>
-          <?php endfor; ?>
-        </tr>
-        <tr>
-          <td>Others</td>
-          <?php for ($i = 1; $i <= 5; $i++): ?>
-            <td>
-              <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="O<?= $i ?>"
-                <?= (isset($plan['reference']) && in_array("o$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
-                <?= $isEditable ? '' : 'disabled' ?>>
-              O<?= $i ?>
-            </td>
-          <?php endfor; ?>
-        </tr>
-      </table>
-    </td>
-    <td>
-      <?php
-      $selectedMethods = explode(', ', $plan['methodology'] ?? '');
-      ?>
-      <label>
-        <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Board" 
-          <?= in_array('Board', $selectedMethods) ? 'checked' : '' ?> 
-          <?= $isEditable ? '' : 'disabled' ?>> Board
-      </label><br>
-      <label>
-        <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="PPT" 
-          <?= in_array('PPT', $selectedMethods) ? 'checked' : '' ?> 
-          <?= $isEditable ? '' : 'disabled' ?>> PPT
-      </label><br>
-      <label>
-        <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Other" 
-          <?= in_array('Other', $selectedMethods) ? 'checked' : '' ?> 
-          <?= $isEditable ? '' : 'disabled' ?>> Other
-      </label>
-    </td>
-    <td>
-      <select class="editable-input <?= $inputClass ?>" name="co_mapping[<?= $plan['pk'] ?>]" 
-        <?= $isEditable ? '' : 'disabled' ?>>
-        <option value="">Select CO</option>
-        <option value="CO1" <?= $plan['co_mapping'] == 'CO1' ? 'selected' : '' ?>>CO1</option>
-        <option value="CO2" <?= $plan['co_mapping'] == 'CO2' ? 'selected' : '' ?>>CO2</option>
-        <option value="CO3" <?= $plan['co_mapping'] == 'CO3' ? 'selected' : '' ?>>CO3</option>
-        <option value="CO4" <?= $plan['co_mapping'] == 'CO4' ? 'selected' : '' ?>>CO4</option>
-        <option value="CO5" <?= $plan['co_mapping'] == 'CO5' ? 'selected' : '' ?>>CO5</option>
-        <option value="CO6" <?= $plan['co_mapping'] == 'CO6' ? 'selected' : '' ?>>CO6</option>
-      </select>
-    </td>
-    <td></td>
-    <td></td>
-  </tr>
-<?php endforeach; ?>
-
+      <tr class="<?= $rowClass ?>">
+        <td class="empty-lecture"><?= $lectureNumberCell ?></td>
+        <td>
+          <input type="hidden" name="proposed_date[<?= $plan['pk'] ?>]"
+            value="<?= htmlspecialchars($plan['proposed_date']) ?>">
+          <?php
+          // Format date from Y-m-d to d-m-Y (if possible)
+          $formattedDate = DateTime::createFromFormat('Y-m-d', $plan['proposed_date']);
+          echo htmlspecialchars($formattedDate ? $formattedDate->format('d-m-Y') : $plan['proposed_date']);
+          ?>
+        </td>
+        <td>
+          <textarea class="editable-input <?= $inputClass ?>" name="content[<?= $plan['pk'] ?>]"
+            placeholder="Enter content" <?= $isEditable ? '' : 'readonly' ?>
+            oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+            onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content'] ?: '') ?></textarea>
+        </td>
+        <td></td>
+        <td>
+          <textarea class="editable-input <?= $inputClass ?>" name="content_not_covered[<?= $plan['pk'] ?>]"
+            placeholder="Enter content not covered" 
+            oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+            onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"><?= htmlspecialchars($plan['content_not_covered'] ?: '') ?></textarea>
+        </td>
+        <td>
+          <table>
+            <tr>
+              <th></th>
+              <?php for ($i = 1; $i <= 5; $i++): ?>
+                <th><?= $i ?></th>
+              <?php endfor; ?>
+            </tr>
+            <tr>
+              <td>Textbook</td>
+              <?php for ($i = 1; $i <= 5; $i++): ?>
+                <td>
+                  <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="T<?= $i ?>"
+                    <?= (isset($plan['reference']) && in_array("t$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
+                    <?= $isEditable ? '' : 'disabled' ?>>
+                  T<?= $i ?>
+                </td>
+              <?php endfor; ?>
+            </tr>
+            <tr>
+              <td>References</td>
+              <?php for ($i = 1; $i <= 5; $i++): ?>
+                <td>
+                  <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="R<?= $i ?>"
+                    <?= (isset($plan['reference']) && in_array("r$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
+                    <?= $isEditable ? '' : 'disabled' ?>>
+                  R<?= $i ?>
+                </td>
+              <?php endfor; ?>
+            </tr>
+            <tr>
+              <td>Others</td>
+              <?php for ($i = 1; $i <= 5; $i++): ?>
+                <td>
+                  <input type="checkbox" name="plan_references[<?= $plan['pk'] ?>][]" value="O<?= $i ?>"
+                    <?= (isset($plan['reference']) && in_array("o$i", array_map('trim', explode(',', strtolower($plan['reference']))))) ? 'checked' : '' ?> 
+                    <?= $isEditable ? '' : 'disabled' ?>>
+                  O<?= $i ?>
+                </td>
+              <?php endfor; ?>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <?php
+          $selectedMethods = explode(', ', $plan['methodology'] ?? '');
+          ?>
+          <label>
+            <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Board" 
+              <?= in_array('Board', $selectedMethods) ? 'checked' : '' ?> 
+              <?= $isEditable ? '' : 'disabled' ?>> Board
+          </label><br>
+          <label>
+            <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="PPT" 
+              <?= in_array('PPT', $selectedMethods) ? 'checked' : '' ?> 
+              <?= $isEditable ? '' : 'disabled' ?>> PPT
+          </label><br>
+          <label>
+            <input type="checkbox" name="methodology[<?= $plan['pk'] ?>][]" value="Other" 
+              <?= in_array('Other', $selectedMethods) ? 'checked' : '' ?> 
+              <?= $isEditable ? '' : 'disabled' ?>> Other
+          </label>
+        </td>
+        <td>
+          <select class="editable-input <?= $inputClass ?>" name="co_mapping[<?= $plan['pk'] ?>]" 
+            <?= $isEditable ? '' : 'disabled' ?>>
+            <option value="">Select CO</option>
+            <option value="CO1" <?= $plan['co_mapping'] == 'CO1' ? 'selected' : '' ?>>CO1</option>
+            <option value="CO2" <?= $plan['co_mapping'] == 'CO2' ? 'selected' : '' ?>>CO2</option>
+            <option value="CO3" <?= $plan['co_mapping'] == 'CO3' ? 'selected' : '' ?>>CO3</option>
+            <option value="CO4" <?= $plan['co_mapping'] == 'CO4' ? 'selected' : '' ?>>CO4</option>
+            <option value="CO5" <?= $plan['co_mapping'] == 'CO5' ? 'selected' : '' ?>>CO5</option>
+            <option value="CO6" <?= $plan['co_mapping'] == 'CO6' ? 'selected' : '' ?>>CO6</option>
+          </select>
+        </td>
+        <td></td>
+        <td></td>
+      </tr>
+      <?php endforeach; ?>
     </table>
-
-
-
 
     <h2>References</h2>
     <!-- Hidden input to pass the subject ID -->
@@ -673,22 +735,22 @@ $totalLectures = count($plans);
                       onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" class="references-textarea" name="subject_references[<?= $code ?>]"
               placeholder="Enter any other reference used"><?= isset($references[$code]) ? htmlspecialchars($references[$code]) : '' ?></textarea><br>
           <?php endforeach; ?>
-
-
         </td>
       </tr>
     </table>
 
     <h2>Missing Content</h2>
     <textarea oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
-              onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" class="missing-content-textarea" placeholder="All topics from last year covered!"></textarea>
+              onfocus="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" 
+              class="missing-content-textarea" 
+              name="missing_content"
+              placeholder="All topics from last year covered!"><?= htmlspecialchars($missing_content) ?></textarea>
 
     <div class="button-container">
       <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
       <button type="button" class="submit-btn" onclick="view_PDF()">View PDF</button>
     </div>
   </form>
-
 
   <!-- Display total lectures -->
   <div class="total-lectures-box">
@@ -746,8 +808,6 @@ function showModal(message, type) {
   }, 3000);
 }
 
-
-
 // On page load, display the popup
 document.addEventListener('DOMContentLoaded', () => {
   // Check if there's a save message from a previous save
@@ -760,8 +820,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showModal('Page reloaded.', 'success');
   }
 });
-
-
 
 // Function to view PDF (opens in a new tab)
 function view_PDF() {
@@ -804,9 +862,7 @@ function view_PDF() {
   form.removeChild(subjectReferencesInput);
   form.removeChild(excludeDatesArrayInput);
   form.removeChild(isNTDInput);
-  }
-
+}
   </script>
 </body>
-
 </html>

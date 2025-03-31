@@ -127,7 +127,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 'subject' => $subject_name,
                 'proposed_date' => $date,
                 'isNTD' => $isNTD,
-                'content' => $content
+                'content' => $content,
+                'dept_id' => null, // Will be populated from existing data
+                'reference' => '', // Will be populated from existing data
+                'methodology' => '', // Will be populated from existing data
+                'co_mapping' => '' // Will be populated from existing data
             ];
             $pk++; // Increment primary key
         }
@@ -143,7 +147,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             'subject' => $subject_name,
                             'proposed_date' => $date,
                             'isNTD' => 0, // Lectures are always teaching days
-                            'content' => ''
+                            'content' => '',
+                            'dept_id' => null, // Will be populated from existing data
+                            'reference' => '', // Will be populated from existing data
+                            'methodology' => '', // Will be populated from existing data
+                            'co_mapping' => '' // Will be populated from existing data
                         ];
                         $pk++; // Increment primary key
                     }
@@ -152,9 +160,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     // Output the dictionary (for debugging purposes)
-    echo "<pre>";
+    //echo "<pre>";
     //print_r($teaching_plan_data);
-    echo "</pre>";
+    //echo "</pre>";
 
 
     // 1. Count number of keys aka length of the dictionary, store it in a variable called max_lectures
@@ -177,9 +185,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $existing_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Output existing records (for debugging purposes)
-        echo "<pre>";
-        print_r($existing_records);
-        echo "</pre>";
+        // echo "<pre>";
+        // print_r($existing_records);
+        // echo "</pre>";
     } catch (PDOException $e) {
         echo "<p class='error-message'>Database error: " . $e->getMessage() . "</p>";
         exit();
@@ -213,8 +221,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Copy content from old row to new row IN THE ORIGINAL ARRAY
         if ($current_key !== null) {
             $teaching_plan_data[$current_key]['content'] = $old_row['content'];
+            $teaching_plan_data[$current_key]['dept_id'] = $old_row['dept_id'];
+            $teaching_plan_data[$current_key]['reference'] = $old_row['reference'];
+            $teaching_plan_data[$current_key]['methodology'] = $old_row['methodology'];
+            $teaching_plan_data[$current_key]['co_mapping'] = $old_row['co_mapping'];
             $lectures_added++;
-            echo $lectures_added;
+            //echo $lectures_added;
             next($teaching_plan_data);
         }
     }
@@ -226,86 +238,177 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Append their content to $missing_content
         foreach ($remaining_records as $old_row) {
-            $missing_content .= $old_row['content'] . "; ";
+            $missing_content .= $old_row['content'] . "\n\n";
         }
     }
 
     // Print the updated teaching plan data
-    echo "<pre>";
-    print_r($teaching_plan_data);
-    echo "</pre>";
+    // echo "<pre>";
+    // print_r($teaching_plan_data);
+    // echo "</pre>";
 
     // Print missing content
-    echo "<p>Missing Content:" . rtrim($missing_content) . "</p>";
-}    
-    // Display success page after insertion
-//     echo "
-//     <!DOCTYPE html>
-// <html lang='en'>
-// <head>
-//     <meta charset='UTF-8'>
-//     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-//     <title>Teaching Plan Submitted</title>
-//     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'>
-//     <style>
-//         body { 
-//             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-//             background-color: #f4f7f6; 
-//             display: flex; 
-//             justify-content: center; 
-//             align-items: center; 
-//             height: 100vh; 
-//             margin: 0; 
-//         }
-//         .container { 
-//             background-color: white; 
-//             border-radius: 12px; 
-//             padding: 40px; 
-//             text-align: center; 
-//             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
-//             animation: fadeIn 0.6s ease-in-out; 
-//         }
-//         .success-message { 
-//             color: #28a745; 
-//             font-size: 24px; 
-//             margin-bottom: 25px; 
-//         }
-//         .success-message i { 
-//             font-size: 50px; 
-//             margin-bottom: 15px; 
-//         }
-//         .btn-link { 
-//             display: inline-block; 
-//             background-color: #007bff; 
-//             color: white; 
-//             padding: 12px 25px; 
-//             border-radius: 8px; 
-//             text-decoration: none; 
-//             font-size: 18px; 
-//             margin: 10px; 
-//             transition: background-color 0.3s ease, transform 0.2s ease; 
-//         }
-//         .btn-link:hover { 
-//             background-color: #0056b3; 
-//             transform: scale(1.05); 
-//         }
-//         @keyframes fadeIn {
-//             0% { opacity: 0; }
-//             100% { opacity: 1; }
-//         }
+    //echo "<p>Missing Content:" . rtrim($missing_content) . "</p>";
+    
+    // Begin transaction for atomic operations
+    try {
+        $pdo->beginTransaction();
+
+        // 1. Delete existing records (the ones we fetched earlier)
+        if (!empty($existing_records)) {
+            $delete_stmt = $pdo->prepare("DELETE FROM teaching_plan WHERE sem_id = :sem_id AND subject = :subject AND division = :division");
+            $delete_stmt->execute([
+                ':sem_id' => $sem_id,
+                ':subject' => $subject_name,
+                ':division' => $division
+            ]);
+            //echo "<p>Deleted " . $delete_stmt->rowCount() . " existing records.</p>";
+        }
+
+        // 2. Insert the new plan into the table (without using staff_id and current_year from old records)
+        $insert_stmt = $pdo->prepare("
+            INSERT INTO teaching_plan 
+            (dept_id, sem_id, division, subject, proposed_date, isNTD, content, reference, methodology, co_mapping) 
+            VALUES 
+            (:dept_id, :sem_id, :division, :subject, :proposed_date, :isNTD, :content, :reference, :methodology, :co_mapping)
+        ");
+
+        $insert_count = 0;
+        foreach ($teaching_plan_data as $row) {
+            $insert_stmt->execute([
+                ':dept_id' => $row['dept_id'] ?? null,
+                ':sem_id' => $row['sem_id'],
+                ':division' => $row['division'],
+                ':subject' => $row['subject'],
+                ':proposed_date' => $row['proposed_date'],
+                ':isNTD' => $row['isNTD'],
+                ':content' => $row['content'],
+                ':reference' => $row['reference'],
+                ':methodology' => $row['methodology'],
+                ':co_mapping' => $row['co_mapping']
+            ]);
+            $insert_count++;
+        }
+        //echo "<p>Inserted $insert_count new records.</p>";
+
+        // 3. If missing content string is not empty, handle missing_content_table
+        if (!empty(trim($missing_content))) {
+            // First try to update any existing record
+            $update_stmt = $pdo->prepare("
+                UPDATE missing_content_table 
+                SET missingcontent = :missingcontent
+                WHERE sem_id = :sem_id 
+                AND division = :division 
+                AND subject = :subject
+            ");
             
-//     </style>
-// </head>
-// <body>
-//     <div class='container'>
-//         <div class='success-message'>
-//             <i class='fas fa-check-circle'></i>
-//             <p>Your teaching plan has been successfully submitted for <strong>{$subject_name}</strong>.</p>
-//         </div>
-//         <a href='teacher.php' class='btn-link'>Go Back</a>
-//         <a href='../teachingPlan/teachingPlan.php' class='btn-link'>View Teaching Plan</a>
-//     </div>
-// </body>
-// </html>";
-// }
+            $update_stmt->execute([
+                ':missingcontent' => rtrim($missing_content, "; "),
+                ':sem_id' => $sem_id,
+                ':division' => $division,
+                ':subject' => $subject_name
+            ]);
+            
+            // If no rows were updated, insert a new record
+            if ($update_stmt->rowCount() === 0) {
+                $insert_stmt = $pdo->prepare("
+                    INSERT INTO missing_content_table 
+                    (dept_id, sem_id, division, subject, missingcontent) 
+                    VALUES 
+                    (:dept_id, :sem_id, :division, :subject, :missingcontent)
+                ");
+                
+                $insert_stmt->execute([
+                    ':dept_id' => !empty($existing_records) ? $existing_records[0]['dept_id'] : NULL,
+                    ':sem_id' => $sem_id,
+                    ':division' => $division,
+                    ':subject' => $subject_name,
+                    ':missingcontent' => rtrim($missing_content, "; ")
+                ]);
+                
+                //echo "<p>Added new missing content record.</p>";
+            } else {
+                //echo "<p>Updated existing missing content record.</p>";
+            }
+        }
+
+        $pdo->commit();
+        //echo "<p class='success-message'>Teaching plan updated successfully!</p>";
+
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        echo "<p class='error-message'>Database error: " . $e->getMessage() . "</p>";
+        exit();
+    }
+
+    // Display success page after insertion
+    echo "
+    <!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Teaching Plan Submitted</title>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f7f6; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .container { 
+            background-color: white; 
+            border-radius: 12px; 
+            padding: 40px; 
+            text-align: center; 
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
+            animation: fadeIn 0.6s ease-in-out; 
+        }
+        .success-message { 
+            color: #28a745; 
+            font-size: 24px; 
+            margin-bottom: 25px; 
+        }
+        .success-message i { 
+            font-size: 50px; 
+            margin-bottom: 15px; 
+        }
+        .btn-link { 
+            display: inline-block; 
+            background-color: #007bff; 
+            color: white; 
+            padding: 12px 25px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 18px; 
+            margin: 10px; 
+            transition: background-color 0.3s ease, transform 0.2s ease; 
+        }
+        .btn-link:hover { 
+            background-color: #0056b3; 
+            transform: scale(1.05); 
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+            
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='success-message'>
+            <i class='fas fa-check-circle'></i>
+            <p>Updated teaching plan dates for <strong>{$subject_name}</strong>.</p>
+        </div>
+        <a href='teacher.php' class='btn-link'>Go Back</a>
+        <a href='../teachingPlan/teachingPlan.php' class='btn-link'>View Teaching Plan</a>
+    </div>
+</body>
+</html>";
+}
 ?>
