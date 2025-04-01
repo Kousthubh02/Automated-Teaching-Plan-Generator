@@ -58,7 +58,7 @@ CREATE TABLE `missing_content_table` (
   `division` text,
   `subject` varchar(10) DEFAULT NULL,
   `missingcontent` text
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `missing_content_table`
