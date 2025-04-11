@@ -3,13 +3,22 @@
         'name' => 'yuzer1mk/code',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '81092a66490e1f4ec989e29d16ff24393407a847',
+        'reference' => 'c920cb20d6c72a40fc1f4447e3cc6e812b927330',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
+        'setasign/fpdf' => array(
+            'pretty_version' => '1.8.6',
+            'version' => '1.8.6.0',
+            'reference' => '0838e0ee4925716fcbbc50ad9e1799b5edfae0a0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../setasign/fpdf',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'smalot/pdfparser' => array(
             'pretty_version' => 'v2.11.0',
             'version' => '2.11.0.0',
@@ -40,7 +49,7 @@
         'yuzer1mk/code' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '81092a66490e1f4ec989e29d16ff24393407a847',
+            'reference' => 'c920cb20d6c72a40fc1f4447e3cc6e812b927330',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
