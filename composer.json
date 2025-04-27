@@ -1,8 +1,0 @@
-{
-    "name": "yuzer1mk/code",
-    "require": {
-        "tecnickcom/tcpdf": "^6.9",
-        "smalot/pdfparser": "*",
-        "setasign/fpdf": "^1.8"
-    }
-}
