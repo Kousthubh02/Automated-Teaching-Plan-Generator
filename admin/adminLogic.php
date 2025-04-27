@@ -158,6 +158,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             'status'  => 'success',
             'message' => "All teaching plan entries have been deleted successfully. Rows deleted from teaching_plan: $affectedRowsTeachingPlan, from reference_table: $affectedRowsReference"
         ]);
+
+        // Reset auto-increment counter (optional)
+        $pdo->exec("ALTER TABLE teaching_plan AUTO_INCREMENT = 1");
+        $pdo->exec("ALTER TABLE reference_table AUTO_INCREMENT = 1");
+
+
     } catch (PDOException $e) {
         // Roll back the transaction on error
         $pdo->rollBack();
