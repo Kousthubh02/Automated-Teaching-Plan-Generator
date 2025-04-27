@@ -42,6 +42,98 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
+    // Check if data exists for this combination before allowing update
+    try {
+        $checkStmt = $pdo->prepare("
+            SELECT COUNT(*) as count 
+            FROM teaching_plan 
+            WHERE subject = :subject 
+            AND division = :division 
+            AND sem_id = :sem_id
+        ");
+        $checkStmt->execute([
+            ':subject' => $subject_name,
+            ':division' => $division,
+            ':sem_id' => $sem_id
+        ]);
+        $result = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result['count'] == 0) {
+            // Data doesn't exist for this combination
+            echo "
+            <!DOCTYPE html>
+            <html lang='en'>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Error - No Data Found</title>
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        background-color: #f4f7f6; 
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        height: 100vh; 
+                        margin: 0; 
+                    }
+                    .container { 
+                        background-color: white; 
+                        border-radius: 12px; 
+                        padding: 40px; 
+                        text-align: center; 
+                        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
+                        animation: fadeIn 0.6s ease-in-out; 
+                    }
+                    .error-message { 
+                        color: #dc3545; 
+                        font-size: 24px; 
+                        margin-bottom: 25px; 
+                    }
+                    .error-message i { 
+                        font-size: 50px; 
+                        margin-bottom: 15px; 
+                    }
+                    .btn-link { 
+                        display: inline-block; 
+                        background-color: #007bff; 
+                        color: white; 
+                        padding: 12px 25px; 
+                        border-radius: 8px; 
+                        text-decoration: none; 
+                        font-size: 18px; 
+                        margin: 10px; 
+                        transition: background-color 0.3s ease, transform 0.2s ease; 
+                    }
+                    .btn-link:hover { 
+                        background-color: #0056b3; 
+                        transform: scale(1.05); 
+                    }
+                    @keyframes fadeIn {
+                        0% { opacity: 0; }
+                        100% { opacity: 1; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='error-message'>
+                        <span style='font-size: 50px;'>❌</span>
+                        <p>No existing data found for <strong>{$subject_name}</strong> in semester <strong>{$sem_id}</strong>, division <strong>{$division}</strong>.</p>
+                        <p>Please use the <strong>Generate Dates</strong> button first.</p>
+                    </div>
+                    <a href='teacher.php' class='btn-link'>Go Back</a>
+                </div>
+            </body>
+            </html>";
+            exit();
+        }
+    } catch (PDOException $e) {
+        echo "<p class='error-message'>Database error while checking existing data: " . $e->getMessage() . "</p>";
+        exit();
+    }
+
+    // [Rest of your existing updateLogic.php code remains the same...]
     // Retrieve dynamic week details
     $first_week_details = isset($_POST['first_week_details']) ? array_values($_POST['first_week_details']) : [];
     $regular_week_details = isset($_POST['regular_week_details']) ? array_values($_POST['regular_week_details']) : [];
@@ -65,6 +157,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
+    // [Continue with the rest of your existing update logic...]
     // Process excluded dates
     $formatted_exclude_dates = [];
     foreach ($exclude_dates as $date_str => $data) {
@@ -82,6 +175,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $all_dates = getAllDates($start_date, $end_date);
     $firstWeekEnd = DateTime::createFromFormat('Y-m-d', $start_date)->modify('+6 days');
 
+    // [Rest of your existing update logic...]
     // Initialize dictionary to store data
     $teaching_plan_data = [];
     $pk = 1; // Primary key counter
@@ -159,12 +253,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
     }
-    // Output the dictionary (for debugging purposes)
-    //echo "<pre>";
-    //print_r($teaching_plan_data);
-    //echo "</pre>";
 
-
+    // [Continue with the rest of your existing update logic...]
     // 1. Count number of keys aka length of the dictionary, store it in a variable called max_lectures
     $max_lectures = count($teaching_plan_data);
 
@@ -183,11 +273,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ':division' => $division
         ]);
         $existing_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Output existing records (for debugging purposes)
-        // echo "<pre>";
-        // print_r($existing_records);
-        // echo "</pre>";
     } catch (PDOException $e) {
         echo "<p class='error-message'>Database error: " . $e->getMessage() . "</p>";
         exit();
@@ -226,7 +311,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $teaching_plan_data[$current_key]['methodology'] = $old_row['methodology'];
             $teaching_plan_data[$current_key]['co_mapping'] = $old_row['co_mapping'];
             $lectures_added++;
-            //echo $lectures_added;
             next($teaching_plan_data);
         }
     }
@@ -242,14 +326,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    // Print the updated teaching plan data
-    // echo "<pre>";
-    // print_r($teaching_plan_data);
-    // echo "</pre>";
-
-    // Print missing content
-    //echo "<p>Missing Content:" . rtrim($missing_content) . "</p>";
-    
     // Begin transaction for atomic operations
     try {
         $pdo->beginTransaction();
@@ -262,7 +338,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ':subject' => $subject_name,
                 ':division' => $division
             ]);
-            //echo "<p>Deleted " . $delete_stmt->rowCount() . " existing records.</p>";
         }
 
         // 2. Insert the new plan into the table (without using staff_id and current_year from old records)
@@ -289,7 +364,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ]);
             $insert_count++;
         }
-        //echo "<p>Inserted $insert_count new records.</p>";
 
         // 3. If missing content string is not empty, handle missing_content_table
         if (!empty(trim($missing_content))) {
@@ -325,90 +399,83 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     ':subject' => $subject_name,
                     ':missingcontent' => rtrim($missing_content, "; ")
                 ]);
-                
-                //echo "<p>Added new missing content record.</p>";
-            } else {
-                //echo "<p>Updated existing missing content record.</p>";
             }
         }
 
         $pdo->commit();
-        //echo "<p class='success-message'>Teaching plan updated successfully!</p>";
+
+        // Display success page after insertion
+        echo "
+        <!DOCTYPE html>
+        <html lang='en'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Teaching Plan Updated</title>
+            <style>
+                body { 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    background-color: #f4f7f6; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    height: 100vh; 
+                    margin: 0; 
+                }
+                .container { 
+                    background-color: white; 
+                    border-radius: 12px; 
+                    padding: 40px; 
+                    text-align: center; 
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
+                    animation: fadeIn 0.6s ease-in-out; 
+                }
+                .success-message { 
+                    color: #28a745; 
+                    font-size: 24px; 
+                    margin-bottom: 25px; 
+                }
+                .success-message i { 
+                    font-size: 50px; 
+                    margin-bottom: 15px; 
+                }
+                .btn-link { 
+                    display: inline-block; 
+                    background-color: #007bff; 
+                    color: white; 
+                    padding: 12px 25px; 
+                    border-radius: 8px; 
+                    text-decoration: none; 
+                    font-size: 18px; 
+                    margin: 10px; 
+                    transition: background-color 0.3s ease, transform 0.2s ease; 
+                }
+                .btn-link:hover { 
+                    background-color: #0056b3; 
+                    transform: scale(1.05); 
+                }
+                @keyframes fadeIn {
+                    0% { opacity: 0; }
+                    100% { opacity: 1; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='success-message'>
+                    <span style='font-size: 50px;'>✅</span>
+                    <p>Updated teaching plan dates for <strong>{$subject_name}</strong>.</p>
+                </div>
+                <a href='teacher.php' class='btn-link'>Go Back</a>
+                <a href='../teachingPlan/teachingPlan.php' class='btn-link'>View Teaching Plan</a>
+            </div>
+        </body>
+        </html>";
 
     } catch (PDOException $e) {
         $pdo->rollBack();
         echo "<p class='error-message'>Database error: " . $e->getMessage() . "</p>";
         exit();
     }
-
-    // Display success page after insertion
-    echo "
-    <!DOCTYPE html>
-<html lang='en'>
-<head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Teaching Plan Submitted</title>
-    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'>
-    <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f4f7f6; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
-        .container { 
-            background-color: white; 
-            border-radius: 12px; 
-            padding: 40px; 
-            text-align: center; 
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
-            animation: fadeIn 0.6s ease-in-out; 
-        }
-        .success-message { 
-            color: #28a745; 
-            font-size: 24px; 
-            margin-bottom: 25px; 
-        }
-        .success-message i { 
-            font-size: 50px; 
-            margin-bottom: 15px; 
-        }
-        .btn-link { 
-            display: inline-block; 
-            background-color: #007bff; 
-            color: white; 
-            padding: 12px 25px; 
-            border-radius: 8px; 
-            text-decoration: none; 
-            font-size: 18px; 
-            margin: 10px; 
-            transition: background-color 0.3s ease, transform 0.2s ease; 
-        }
-        .btn-link:hover { 
-            background-color: #0056b3; 
-            transform: scale(1.05); 
-        }
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-            
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <div class='success-message'>
-            <i class='fas fa-check-circle'></i>
-            <p>Updated teaching plan dates for <strong>{$subject_name}</strong>.</p>
-        </div>
-        <a href='teacher.php' class='btn-link'>Go Back</a>
-        <a href='../teachingPlan/teachingPlan.php' class='btn-link'>View Teaching Plan</a>
-    </div>
-</body>
-</html>";
 }
 ?>
