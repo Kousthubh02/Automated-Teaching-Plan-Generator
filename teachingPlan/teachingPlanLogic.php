@@ -490,6 +490,18 @@ $totalLectures = count($plans);
       outline: none;
     }
 
+    .missing-content-warning {
+      color: #ff0000;
+      background-color: #ffe6e6;
+      padding: 8px;
+      border: 1px solid #ff9999;
+      border-radius: 5px;
+      margin: 10px auto;
+      text-align: center;
+      display: none; /* Hidden by default */
+      width: 80%;
+    }
+
     @media (max-width: 768px) {
       .references-table {
         font-size: 12px;
@@ -746,6 +758,10 @@ $totalLectures = count($plans);
               name="missing_content"
               placeholder="All topics from last year covered!"><?= htmlspecialchars($missing_content) ?></textarea>
 
+    <div id="missingContentWarning" class="missing-content-warning">
+    ⚠️ Warning: Missing content has been specified! Please ensure this is accurate before saving.
+    </div>
+
     <div class="button-container">
       <button type="submit" id="saveBtn" class="submit-btn" <?= $editable == 0 ? 'disabled' : '' ?>>Save Changes</button>
       <button type="button" class="submit-btn" onclick="view_PDF()">View PDF</button>
@@ -819,6 +835,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Default message for manual reloads or initial loads
     showModal('Page reloaded.', 'success');
   }
+});
+
+// Check missing content on load and whenever it changes
+const missingContentTextarea = document.querySelector('.missing-content-textarea');
+const missingContentWarning = document.getElementById('missingContentWarning');
+
+function checkMissingContent() {
+  if (missingContentTextarea.value.trim() !== '') {
+    missingContentWarning.style.display = 'block';
+  } else {
+    missingContentWarning.style.display = 'none';
+  }
+}
+
+// Initial check on page load
+document.addEventListener('DOMContentLoaded', () => {
+  checkMissingContent();
+  
+  // Also check whenever the content changes
+  missingContentTextarea.addEventListener('input', checkMissingContent);
 });
 
 // Function to view PDF (opens in a new tab)
