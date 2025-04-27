@@ -7,7 +7,7 @@ ini_set('display_errors', 1);
 ob_start();
 
 // Load TCPDF library via Composer autoload
-require '../vendor/autoload.php';
+require './vendor/autoload.php';
 
 // Debug: Check if TCPDF is loaded
 if (!class_exists('TCPDF')) {

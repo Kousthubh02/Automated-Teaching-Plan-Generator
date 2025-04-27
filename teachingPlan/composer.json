@@ -1,0 +1,6 @@
+{
+    "name": "yuzer1mk/teaching-plan",
+    "require": {
+        "tecnickcom/tcpdf": "^6.9"
+    }
+}
