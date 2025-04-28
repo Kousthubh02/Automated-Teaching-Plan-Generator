@@ -142,12 +142,12 @@
                 
                 <p><strong>Example CSV Content:</strong></p>
                 <pre>date,reason,semesters
-26-01-2023,Republic Day,ALL
-15-08-2023,Independence Day,ALL
-02-10-2023,Gandhi Jayanti,ALL
-25-12-2023,Christmas,ALL
-01-05-2023,Labour Day,3,4,5
-10-09-2023,College Event,6,7</pre>
+26-01-2023,Republic Day,"ALL"
+15-08-2023,Independence Day,"ALL"
+02-10-2023,Gandhi Jayanti,"ALL"
+25-12-2023,Christmas,"ALL"
+01-05-2023,Labour Day,"3,4,5"
+10-09-2023,College Event,"6,7"</pre>
                 
                 <p><strong>Important Notes:</strong></p>
                 <ul>
