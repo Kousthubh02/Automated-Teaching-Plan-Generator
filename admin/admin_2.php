@@ -497,7 +497,7 @@ function handleDelete() {
         return;
     }
     
-    if (confirm('Are you sure you want to delete this teaching plan and reference table entry?')) {
+    if (confirm('Are you sure you want to delete this teaching plan, reference table and missing content entry?')) {
         fetch('adminLogic.php', {
             method: 'POST',
             headers: {
@@ -516,7 +516,7 @@ function handleDelete() {
 }
 
 function handleDeleteAll() {
-    if (confirm('Are you sure you want to delete ALL teaching plan and reference table entries ?')) {
+    if (confirm('Are you sure you want to delete ALL teaching plan, reference table and missing content entries ?')) {
         fetch('adminLogic.php', {
             method: 'POST',
             headers: {

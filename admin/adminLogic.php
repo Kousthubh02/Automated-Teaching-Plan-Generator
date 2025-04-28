@@ -99,6 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
         $affectedRowsReference = $stmtRef->rowCount();
         error_log("Number of rows deleted from reference_table: " . $affectedRowsReference);
 
+        // Step 3: Delete from missing_content_table using subject 
+        $stmtRef = $pdo->prepare("DELETE FROM missing_content_table WHERE sem_id = ? AND subject = ? AND division = ?");
+        $stmtRef->execute([$semester, $subjectName, $division]);
+        $affectedRowsMCT = $stmtRef->rowCount();
+        error_log("Number of rows deleted from missing_content_table: " . $affectedRowsMCT);
+
         // Commit the transaction
         $pdo->commit();
 
@@ -106,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             error_log("Deletion successful for: sem_id=[$semester], subject=[$subjectName], division=[$division]");
             echo json_encode([
                 'status'  => 'success',
-                'message' => "Successfully deleted the teaching plan entry. Rows deleted from teaching_plan: $affectedRowsTeachingPlan, from reference_table: $affectedRowsReference"
+                'message' => "Successfully deleted the teaching plan entry. Rows deleted from teaching_plan: $affectedRowsTeachingPlan, from reference_table: $affectedRowsReference, from missing_content_table: $affectedRowsMCT"
             ]);
         } else {
             error_log("Deletion executed but no matching entry was found to delete in either table.");
@@ -151,12 +157,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
         $affectedRowsReference = $stmtRef->rowCount();
         error_log("Number of rows deleted from reference_table: " . $affectedRowsReference);
 
+        // Step 3: Delete all rows from missing_content_table
+        $stmt = $pdo->prepare("DELETE FROM missing_content_table");
+        $stmt->execute();
+        $affectedRowsMCT = $stmt->rowCount();
+        error_log("Number of rows deleted from teaching_plan: " . $affectedRowsMCT);
+
         // Commit the transaction
         $pdo->commit();
 
         echo json_encode([
             'status'  => 'success',
-            'message' => "All teaching plan entries have been deleted successfully. Rows deleted from teaching_plan: $affectedRowsTeachingPlan, from reference_table: $affectedRowsReference"
+            'message' => "All teaching plan entries have been deleted successfully. Rows deleted from teaching_plan: $affectedRowsTeachingPlan, from reference_table: $affectedRowsReference, from missing_content_table: $affectedRowsMCT"
         ]);
 
         // Reset auto-increment counter (optional)
